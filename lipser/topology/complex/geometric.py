@@ -1,15 +1,16 @@
-from topology.complex.base import Complex
-from topology.complex.cellular import DualComplex
-from topology.complex.simplicial import SimplicialComplex
-from topology.geometry import circumcenter, circumradius
-from topology.util import in_bounds, stuple, to_path, tqit
+from lipser.topology.complex.base import Complex
+from lipser.topology.complex.cellular import DualComplex
+from lipser.topology.complex.simplicial import SimplicialComplex
+from lipser.geometry.util import circumcenter, circumradius
+from lipser.topology.util import in_bounds, to_path
+
+from lipser.util import stuple, tqit
 
 import dionysus as dio
 import diode
 
 
 class EmbeddedComplex(Complex):
-    __slots__ = Complex.__slots__ + ['P']
     def __init__(self, P):
         self.P = P
         Complex.__init__(self, P.shape[-1])
@@ -30,7 +31,6 @@ class DelaunayComplex(SimplicialComplex, EmbeddedComplex):
         return in_bounds(circumcenter(self.P[s]), bounds)
 
 class VoronoiComplex(DualComplex, EmbeddedComplex):
-    __slots__ = DualComplex.__slots__ + EmbeddedComplex.__slots__
     def __init__(self, K, B=set(), verbose=False):
         P = circumcenter(K.P[K(K.dim)])
         EmbeddedComplex.__init__(self, P)

@@ -1,5 +1,5 @@
-from topology.complex.base import Element, Complex
-from topology.util import tqit
+from lipser.topology.complex.base import Element, Complex
+from lipser.util.iter import tqit
 
 
 class Cell(Element):

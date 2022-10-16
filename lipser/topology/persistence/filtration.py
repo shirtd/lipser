@@ -1,9 +1,8 @@
-from topology.complex.chains import Chain, CoChain
-from topology.util import insert, partition
+from lipser.topology.complex.chains import Chain, CoChain
+from lipser.util import insert, partition
 
 
 class Filtration:
-    __slots__ = ['sequence', 'dim', 'key', 'reverse', 'imap']
     def __init__(self, K, key, reverse=False):
         self.sequence = K.get_sequence(key, reverse)
         self.dim, self.key, self.reverse = K.dim, key, reverse

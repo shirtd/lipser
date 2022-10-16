@@ -1,4 +1,4 @@
-from topology.util import diff, identity
+from lipser.util import diff, identity
 
 from functools import reduce
 from tqdm import tqdm
@@ -8,8 +8,6 @@ import numpy as np
 #       unpairs contains death indices, pairs contains birth indices
 
 class Reduction:
-    __slots__ = ['__sequence', '__n', 'R', 'coh', 'dim','pivot_map',
-                    'unpairs', 'pairs', 'copairs', 'D']
     def __init__(self, K, F, R, coh, pivot):
         self.__sequence, self.__n = F.get_range(R, coh), len(F) - len(R)
         self.R, self.coh, self.dim = R, coh, F.dim
@@ -46,7 +44,6 @@ class Reduction:
                     self[low] = i
 
 class Diagram(Reduction):
-    __slots__ = Reduction.__slots__ + ['diagram', 'fmap']
     def __init__(self, K, F, R=set(), coh=False, pivot=None, clearing=False, verbose=False):
         pivot = F if pivot is None else pivot
         Reduction.__init__(self, K, F, R, coh, pivot)
@@ -68,9 +65,9 @@ class Diagram(Reduction):
         yield from self.pairs.values()
     def is_relative(self, i):
         return i in self.R
-    def get_diagram(self, K, F, pivot):
-        fmap = {}
-        dgms = [[] for d in range(self.dim+1)]
+    def get_diagram(self, K, F, pivot=None):
+        pivot = F if pivot is None else pivot
+        fmap, dgms = {}, [[] for d in range(self.dim+1)]
         for i, j in self.items():
             b, d = K[pivot[i]], K[F[self[i]]]
             fmap[i] = [b(pivot.key), d(F.key)][::(-1 if F.reverse else 1)]

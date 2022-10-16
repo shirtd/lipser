@@ -1,8 +1,7 @@
-from topology.util import stuple
+from lipser.util import stuple
 
 
 class Element:
-    __slots__ = ['dim', 'data']
     def __init__(self, atoms, dim, **data):
         self.dim, self.data = dim, data
         self.__atoms = stuple(atoms)
@@ -27,7 +26,6 @@ class Element:
         return (self.dim, self.__atoms) < (other.dim, other.__atoms)
 
 class Complex:
-    __slots__ = ['dim']
     def __init__(self, dim):
         self.dim = dim
         self.__elements = {d : [] for d in range(dim+1)}

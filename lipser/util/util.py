@@ -8,7 +8,7 @@ def diff(p):
     return p[1] - p[0]
 
 def stuple(l, *args, **kw):
-    return tuple(sorted(s, *args, **kw))
+    return tuple(sorted(l, *args, **kw))
 
 def grid_coord(coords, n):
     return [coords//n, coords%n]

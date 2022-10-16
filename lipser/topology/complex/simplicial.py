@@ -1,4 +1,4 @@
-from topology.complex.base import Element, Complex
+from lipser.topology.complex.base import Element, Complex
 
 
 class Simplex(Element):
