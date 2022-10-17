@@ -1,15 +1,14 @@
 import matplotlib.pyplot as plt
 
-def plot_surf()
-    fig, ax = plt.subplots(figsize=(10,8))
-    surf = ax.contourf(X, Y, G, levels=CUTS, colors=[COLOR[c] for c in COLORS], alpha=0, zorder=0)
-    # contour = ax.contour(X, Y, G, levels=CUTS, colors=[COLOR[c] for c in COLORS], alpha=1, zorder=0)
-    contour = ax.contour(X, Y, G, levels=CUTS, colors='black', alpha=1, zorder=0)
+def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0):
+    res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, alpha=alpha, zorder=0),
+            'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, colors=colors, zorder=0)}
     ax.axis('off')
     ax.axis('scaled')
-    ax.set_ylim(-2,2)
-    ax.set_xlim(-3,3)
+    ax.set_ylim(-4,4)
+    ax.set_xlim(-5,5)
     plt.tight_layout()
+    return res
 
 
 # max_plot = plot_rips(ax, P[:,:2], K, THRESH, COLOR['blue'], False, zorder=2)

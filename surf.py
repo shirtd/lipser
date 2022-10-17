@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-from contours.data import make_grid
+from contours.surface import make_grid
 from lipser.util.math import mk_gauss
 
 
