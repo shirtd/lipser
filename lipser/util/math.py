@@ -1,5 +1,3 @@
-from geometry.util import lipschitz
-
 import numpy.linalg as la
 import numpy as np
 
@@ -13,11 +11,6 @@ def ripple(t, f=1, l=1, d=1, w=1, s=1):
 
 def ripple_grid(x, y, f=1, l=1, d=1, w=1, s=1):
     return ripple(la.norm(np.stack((x, y), axis=2), axis=2), f, l, d, w, s)
-
-def ripple_lips(a=0, b=1, n=1024, f=1, l=1, d=1, w=1, s=1):
-    t = np.linspace(a, b, n)
-    f = ripple(t, f, l, d, w, s)
-    return lipschitz(f, t)
 
 def get_ripple(x, y, f=1, l=1, d=1, w=1, s=1, exp=-3, noise=False, scale=False):
     f = ripple_grid(x, y, f, l, d, w, s)

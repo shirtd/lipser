@@ -2,6 +2,8 @@ import numpy as np
 import numpy.linalg as la
 from itertools import combinations
 from tqdm import tqdm
+
+from lipser.util.math import ripple
 # from lipser import util
 
 
@@ -20,6 +22,10 @@ def get_delta(n, w=1, h=1):
 def lipschitz(F, P):
     return max(abs(fp - fq) / la.norm(p - q) for (fp,p), (fq,q) in tqdm(list(combinations(zip(F,P), 2))))
 
+def ripple_lips(a=0, b=1, n=1024, f=1, l=1, d=1, w=1, s=1):
+    t = np.linspace(a, b, n)
+    f = ripple(t, f, l, d, w, s)
+    return lipschitz(f, t)
 
 def tri_circumradius_2d(T):
     a,b,c = [la.norm(y - x) for x,y in combinations(T,2)]
