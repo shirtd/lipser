@@ -7,120 +7,61 @@ from contours.surface import make_grid, ScalarFieldData, SampleData
 from contours.plot import plot_surface, plot_points, plot_rips
 from contours.style import COLOR
 
+from lips.util import format_float
+
 import os
 
-#
-# https://stackoverflow.com/questions/55143976/python-how-to-record-system-audiothe-output-from-the-speaker
-#
 
-import soundcard as sc
-import time
+SCALE = None
+WEIGHT = 1
+RESOLUTION = 256
+CUTS = [0, 0.07, 0.15, 0.2, 0.27, 0.4, 0.6, 0.75]
 
-# get a list of all speakers:
-speakers = sc.all_speakers()
-# get the current default speaker on your system:
-default_speaker = sc.default_speaker()
+DPI = 500
 
-# get a list of all microphones:v
-mics = sc.all_microphones(include_loopback=True)
-# get the current default microphone on your system:
-default_mic = mics[1]
+# EPSILON = 0.3
 
+# plt.ion()
+fig, ax = plt.subplots(figsize=(12,9))
 
-# RES = 32
-# SHAPE = (2,1)
-# SURF_PATH = 'data/surf32.csv'
-# SAMP_PATH = 'data/surf-sample_329_2e-1.csv'
-# MULT = 1.2
-#
-# # CUTS = [0.05, 0.3, 0.55, 0.8, 1.31]
-# # COLOR_ORDER = ['green', 'blue', 'purple', 'yellow']
-# CUTS = [0.05, 0.2, 0.45, 0.875, 1.09, 1.31]
-# COLOR_ORDER = ['blue','green','yellow','salmon','purple']
-# COLORS = [COLOR[k] for k in COLOR_ORDER]
-
-import argparse
-
-parser = argparse.ArgumentParser(prog='circler')
-
-parser.add_argument('--dir', default=os.path.join('figures','lips'), help='dir')
-parser.add_argument('--file', default='data/surf_279_2e-1.csv', help='file')
-
-
-# def plot_points(self, points, key, radius=DEFAULT['point']['radius'], **kwargs):
-#     points = np.array([p for p in points if all(0 <= c <= l for l,c in zip(self.bounds, p))])
-#     element = pyvista.PolyData(points).glyph(scale=False, geom=pyvista.Sphere(radius=radius))
-#     kwargs = {**{'color' : DEFAULT['point']['color']}, **kwargs}
-#     return self.add_element(element, key, **kwargs)
 
 if __name__ == '__main__':
 
-    SKIP = 4
-    FRAMES = 100
-    COEF = 60
-    SCALE = None
-    WEIGHT = 10
-
-    LENGTH = 30
-
-    for i in range(len(mics)):
-        try:
-            print(f"{i}: {mics[i].name}")
-        except Exception as e:
-            print(e)
-
-    kw = {  'in':   {   'samplerate':   148000},
-            'out':  {   'samplerate':   148000}}
-
-    plt.ion()
-    # plt.scatter(data[:,0]+1, data[:,1]+1, s=1, alpha=0.1)
-    # plt.scatter(data[:,2], data[:,3], s=2, alpha=0.1)
-    fig, ax = plt.subplots()
-    ax.axis('off')
-
-    if SCALE is not None:
-        ax.set_xlim(-SCALE,SCALE)
-        ax.set_ylim(-SCALE,SCALE)
-
-    with (  default_mic.recorder(**kw['in']) as mic ) : # ,
-            # default_speaker.player(**kw['out']) as sp):
+    X = np.vstack(( np.sin(np.linspace(-np.pi, np.pi, RESOLUTION)),
+                    np.cos(np.linspace(-np.pi, np.pi, RESOLUTION)))).T
 
 
-        for i in range(LENGTH):
-            print("Recording...")
-            _data = mic.record(numframes=COEF*FRAMES)
-
-            data = _data[::SKIP]*i/100
-            time = np.linspace(0, WEIGHT, len(data))
-            ax.plot(data[:,4]*time, data[:,5]*time, alpha=0.25,lw=0.5)
-            plt.pause(1.1)
+    # ax.plot(X[:,0], X[:,1])
 
 
-    # fout = 'data/drip2.txt'
-    # print("saving %s" % fout)
-    # np.savetxt(fout, data)
+    # TODO union of balls
 
 
-    # import pyvistaqt as pvqt
-    # import pyvista
-    # pvqt.BackgroundPlotter()
-    # element = pyvista.PolyData(np.vstack([data[:,4:].T,np.array(range(len(data)))]).T).glyph(scale=False, geom=pyvista.Sphere(radius=10))
+    for seed in range(10):
+        ax.axis('off')
+        if SCALE is not None:
+            ax.set_xlim(-SCALE, SCALE)
+            ax.set_ylim(-SCALE, SCALE)
+        else:
+            ax.axis('equal')
 
+        SEED = seed
+        np.random.seed(seed)
 
+        P = X + (np.random.rand(RESOLUTION,2)-1/2) * WEIGHT
+        # ax.scatter(P[:,0], P[:,1], s=5, color='black', alpha=1, zorder=1)
 
+        for EPSILON in CUTS:
+            rips = RipsComplex(P, EPSILON)
+            rips_plt = plot_rips(ax, rips, alpha=1/(1+EPSILON), zorder=1) # , alpha=1/MULT)
 
-    # if input('save? ') in {'y','yes','Y'}:
-    #     plt.savefig('data/last_frame.png')
+            DIR = "figures"
+            dout = os.path.join(DIR, f"circle{SEED}w{int(10*WEIGHT)}")
+            if not os.path.exists(dout):
+                os.makedirs(dout)
 
+            fout = os.path.join(dout, f"{SEED}-{RESOLUTION}w{int(10*WEIGHT)}d{int(10*EPSILON)}.png")
+            print(f"saving {fout}")
+            plt.savefig(fout, dpi=DPI)
 
-    # surf = ScalarFieldData(SURF_PATH, make_grid(RES, SHAPE))
-    # sample = SampleData(SAMP_PATH)
-    # rips = RipsComplex(sample.points, sample.radius*MULT)
-    # for s in rips:
-    #     s.data['f'] = sample(s).max()
-    #
-    # plt.ion()
-    # fig, ax = plt.subplots(figsize=(10,8))
-    # surf_plt = plot_surface(ax, surf, CUTS, COLORS)
-    # rips_plt = plot_rips(ax, rips, zorder=1, color=COLOR['red'], alpha=1/MULT)
-    # plt.show()
+        ax.cla()
