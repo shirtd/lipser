@@ -1,4 +1,11 @@
 import matplotlib.pyplot as plt
+import numpy.linalg as la
+import numpy as np
+
+from lips.util import lmap
+from contours.style import COLOR
+# plt.ion()
+
 
 def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0):
     res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, alpha=alpha, zorder=0),
@@ -9,6 +16,40 @@ def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0):
     ax.set_xlim(-5,5)
     plt.tight_layout()
     return res
+
+def plot_points(ax, points, visible=True, **kwargs):
+    p = ax.scatter(points[:,0], points[:,1], **kwargs)
+    p.set_visible(visible)
+    return p
+
+def plot_balls(ax, P, F, **kwargs):
+    balls = []
+    for p,f in zip(P, F):
+        s = plt.Circle(p, f, **kwargs)
+        balls.append(s)
+        ax.add_patch(s)
+    return balls
+
+def plot_poly(ax, P, T, visible=True, **kwargs):
+    tp = {t : plt.Polygon(P[t,:], **kwargs) for t in T}
+    lmap(lambda t: ax.add_patch(t), tp.values())
+    if not visible:
+        for t,p in tp.items():
+            p.set_visible(False)
+    return tp
+
+def plot_edges(ax, P, E, visible=True, **kwargs):
+    ep = {e : ax.plot(P[e,0], P[e,1], **kwargs)[0] for e in E}
+    if not visible:
+        for e,p in ep.items():
+            p.set_visible(False)
+    return ep
+
+def plot_rips(ax, complex, color=COLOR['red'], visible=True, dim=2, zorder=1, alpha=1):
+    return {0 : plot_points(ax, complex.P, visible, color='black', s=10, zorder=zorder+2),
+            1 : plot_edges(ax, complex.P, complex(1), visible, color='black', alpha=alpha, zorder=zorder+1, lw=1),
+            2 : plot_poly(ax, complex.P, complex(2), visible, color=color, alpha=alpha*0.25, zorder=zorder)}
+
 
 
 # max_plot = plot_rips(ax, P[:,:2], K, THRESH, COLOR['blue'], False, zorder=2)

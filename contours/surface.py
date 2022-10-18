@@ -1,19 +1,47 @@
 import numpy as np
 import os
 
-from lipser.util import lmap
-from lipser.util.math import mk_gauss
-from lipser.geometry.util import lipschitz
+from lips.util import lmap
+from lips.util.math import mk_gauss
+from lips.geometry.util import lipschitz
 
 def make_grid(resolution=32, shape=(2,1)):
     return np.meshgrid( np.linspace(-shape[0], shape[0], resolution*shape[0]),
                         np.linspace(-shape[1], shape[1], resolution*shape[1]))
 
+class DataFile:
+    def __init__(self, file_name, dir='./'):
+        self.path = os.path.join(dir, file_name)
+        self.file = os.path.basename(file_name)
+        self.folder = os.path.dirname(file_name)
+        self.name, self.extension = os.path.splitext(self.file)
+    def load(self):
+        return np.loadtxt(self.path)
 
 class Surface:
     def __init__(self, surface, grid):
         self.surface, self.grid = surface, grid
         self.grid_points = np.vstack(lmap(lambda x: x.flatten(), self.grid)).T
+
+class Sample:
+    def __init__(self, points, function):
+        self.points = points
+        self.function = function
+    def __getitem__(self, i):
+        return self.points[i]
+    def __call__(self, i):
+        return self.function[i]
+    def __iter__(self):
+        for p in self.points:
+            yield p
+
+class SampleData(Sample, DataFile):
+    def __init__(self, file_name, radius=None):
+        DataFile.__init__(self, file_name)
+        data = self.load()
+        Sample.__init__(self, data[:,:2], data[:,2])
+        self.radius = float(self.name.split('_')[2]) if radius is None else radius
+
 
 class GaussianSurface(Surface):
     def __init__(self, resolution, shape, *args, **kwargs):
@@ -27,21 +55,17 @@ class ScalarField(Surface):
         self.constant = lipschitz(self.function, grid) if constant is None else self.constant
         Surface.__init__(self, surface, self._get_grid(surface, grid, self.constant) if grid is None else grid)
     def __call__(self, x):
-        return self.function[x] if istype(x,int) else self.surface[x]
+        return self.function[x]
     def __getitem__(self, i):
         return self.grid_points[i]
 
-class ScalarFieldFile(ScalarField):
+class ScalarFieldData(ScalarField, DataFile):
     def __init__(self, file_name, grid=None, constant=None, dir='./'):
-        ScalarField.__init__(self, np.loadtxt(file_name), grid, constant)
-        self.path = os.path.join(dir, file_name)
-        self.file = os.path.basename(file_name)
-        self.folder = os.path.dirname(file_name)
-        self.name, self.extension = os.path.splitext(self.file)
+        DataFile.__init__(self, file_name, dir)
+        ScalarField.__init__(self, self.load(), grid, constant)
 
 
-# class SurfaceSample(Surface):
-#     def __init__(self, file_name, sample, constant=None):
+
 #
 # G = mk_gauss(X, Y, GAUSS_ARGS)
 # _c = args.cmult*3.1443048369350226 #

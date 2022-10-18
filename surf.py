@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 from contours.surface import make_grid
-from lipser.util.math import mk_gauss
+from lips.util.math import mk_gauss
 
 
 SAVE = True
