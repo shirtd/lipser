@@ -17,6 +17,14 @@ def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0):
     plt.tight_layout()
     return res
 
+def plot_rainier(ax, surf, cuts, colors, alpha=0.5, zorder=0):
+    res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, alpha=alpha, zorder=0),
+            'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, colors=colors, zorder=0)}
+    ax.axis('off')
+    ax.axis('scaled')
+    plt.tight_layout()
+    return res
+
 def plot_points(ax, points, visible=True, **kwargs):
     p = ax.scatter(points[:,0], points[:,1], **kwargs)
     p.set_visible(visible)

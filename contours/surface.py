@@ -22,6 +22,8 @@ class Surface:
     def __init__(self, surface, grid):
         self.surface, self.grid = surface, grid
         self.grid_points = np.vstack(lmap(lambda x: x.flatten(), self.grid)).T
+    def get_data(self):
+        return np.vstack([self.grid_points.T, self.surface.flatten()]).T
 
 class Sample:
     def __init__(self, points, function):
@@ -34,13 +36,15 @@ class Sample:
     def __iter__(self):
         for p in self.points:
             yield p
+    def __len__(self):
+        return len(self.points)
 
 class SampleData(Sample, DataFile):
     def __init__(self, file_name, radius=None):
         DataFile.__init__(self, file_name)
         data = self.load()
         Sample.__init__(self, data[:,:2], data[:,2])
-        self.radius = float(self.name.split('_')[2]) if radius is None else radius
+        self.radius = float(self.name.split('_')[-1]) if radius is None else radius
 
 
 class GaussianSurface(Surface):
