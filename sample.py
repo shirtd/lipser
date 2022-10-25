@@ -14,18 +14,31 @@ from scipy.spatial import KDTree
 
 import os, sys
 
+# # RAINIER
+# RES = 337
+# SHAPE = (1,1)
+# # SAMP_PATH = 'data/surf-sample_329_2e-1.csv'
+# # MULT = 1.2
+#
+# MIN = 265.258441
+# MAX = 4379.845434
+#
+# # CUTS = MAX * np.array([0.0, 0.15, 0.28, 0.38, 0.48, 1.0]) + MIN
+# CUTS = [200, 1000, 1400, 1800, 2200, np.inf]
+# COLOR_ORDER = ['blue','green','yellow','salmon','purple']
+# COLORS = [COLOR[k] for k in COLOR_ORDER]
 
-RES = 337
-SHAPE = (1,1)
+# RAINIER
+RES = 32
+SHAPE = (2,1)
 # SAMP_PATH = 'data/surf-sample_329_2e-1.csv'
 # MULT = 1.2
 
-MIN = 265.258441
-MAX = 4379.845434
+MIN = 0.0
+MAX = 1.3
 
-# CUTS = MAX * np.array([0.0, 0.15, 0.28, 0.38, 0.48, 1.0]) + MIN
-CUTS = [200, 1000, 1400, 1800, 2200, np.inf]
-COLOR_ORDER = ['blue','green','yellow','salmon','purple']
+CUTS = [0.05, 0.3, 0.55, 0.8, 1.3]
+COLOR_ORDER = ['green', 'blue', 'purple', 'yellow']
 COLORS = [COLOR[k] for k in COLOR_ORDER]
 
 
@@ -37,7 +50,7 @@ parser.add_argument('--dir', default='data', help='dir')
 parser.add_argument('--file', default='data/rainier_sub16.csv', help='file')
 parser.add_argument('--load', default='data/rainier_sub16-sample_1094_1e-1.csv', help='file')
 # parser.add_argument('--name', default='sample', help='name')
-parser.add_argument('--thresh', type=float, default=1e-1, help='radius')
+parser.add_argument('--thresh', type=float, default=None, help='radius')
 parser.add_argument('--no-add', action='store_true', help="load but don't add")
 
 MARGIN = 0 # THRESH/2
@@ -70,15 +83,16 @@ if __name__ == '__main__':
 
     if args.load is not None:
         sample = SampleData(args.load)
+        THRESH = sample.radius if args.thresh is None else args.thresh
         sample_plt = plot_points(ax, sample, color='black', alpha=0.5, s=5)
-        ball_plt = plot_balls(ax, sample, np.ones(len(sample))*sample.radius/2, color=COLOR['salmon'], alpha=0.25)
+        ball_plt = plot_balls(ax, sample, np.ones(len(sample))*THRESH/2, color=COLOR['salmon'], alpha=0.25)
 
-    P = get_sample(fig, ax, surf.get_data(), args.thresh)
+    P = get_sample(fig, ax, surf.get_data(), THRESH)
     # if args.load is not None and not args.no_add:
     #     P = np.vstack([sample.points, P])
 
 
-    thresh_s = np.format_float_scientific(args.thresh, trim='-')
+    thresh_s = np.format_float_scientific(THRESH, trim='-')
     name = '%s-sample' % surf.name
     fname = os.path.join(args.dir, '%s_%d_%s.csv' % (name, len(P), thresh_s))
     if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
