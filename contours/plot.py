@@ -82,7 +82,7 @@ def plot_edges(ax, P, E, visible=True, **kwargs):
             p.set_visible(False)
     return ep
 
-def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visible=True, dim=2, zorder=1, alpha=0.7, fade=[1, 1., 0.5], s=9):
+def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visible=True, dim=2, zorder=1, alpha=0.7, fade=[1, 0.6, 0.3], s=9):
     return {0 : plot_points(ax, complex.P, visible, color='black', s=s, zorder=zorder+2, alpha=alpha*fade[0]),
             1 : plot_edges(ax, complex.P, complex(1), visible, color=edge_color, alpha=alpha*fade[1], zorder=zorder+1, lw=1),
             2 : plot_poly(ax, complex.P, complex(2), visible, color=color, alpha=alpha*fade[2], zorder=zorder)}
