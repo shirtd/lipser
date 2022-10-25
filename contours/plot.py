@@ -6,15 +6,44 @@ from lips.util import lmap
 from contours.style import COLOR
 # plt.ion()
 
+def plot_barcode(ax, dgm, cuts, lw=5, thresh=0, *args, **kwargs):
+    dgm = np.array([p for p in dgm if p[1]-p[0] > thresh and p[1] != np.inf])
+    if not len(dgm):
+        return None
+    for i, (birth, death) in enumerate(dgm):
+        for name, v in cuts.items():
+            a, b, c = v['min'], v['max'], v['color']
+            if a < birth and death <= b:
+                ax.plot([birth, death], [i, i], c=c, lw=lw)
+            elif birth < a and death > a and death <= b:
+                ax.plot([a, death], [i, i], c=c, lw=lw)
+            elif birth > a and birth < b and death > b:
+                ax.plot([birth, b], [i, i], c=c, lw=lw)
+            elif birth <= a and b < death:
+                ax.plot([b, a], [i, i], c=c, lw=lw)
+            # if death == np.inf:
+            #       ax.plot([lim, lim+0.1], [i, i], c='black', linestyle='dotted')
+    ax.get_yaxis().set_visible(False)
+    plt.tight_layout()
+    return ax
 
-def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0):
-    res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, alpha=alpha, zorder=0),
-            'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, colors=colors, zorder=0)}
+def get_color(f, cuts, colors, default=COLOR['black']):
+    for (a,b), c in zip(zip(cuts[:-1],cuts[1:]), colors):
+        if a <= f < b:
+            return c
+    return default
+
+def init_surface(ax, xlim=(-3,3), ylim=(-2,2)):
     ax.axis('off')
     ax.axis('scaled')
-    ax.set_ylim(-4,4)
-    ax.set_xlim(-5,5)
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
     plt.tight_layout()
+
+def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0, xlim=(-3,3), ylim=(-2,2)):
+    res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, alpha=alpha, zorder=0),
+            'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, colors=colors, zorder=0)}
+    init_surface(ax, xlim, ylim)
     return res
 
 def plot_rainier(ax, surf, cuts, colors, alpha=0.5, zorder=0):
@@ -53,7 +82,7 @@ def plot_edges(ax, P, E, visible=True, **kwargs):
             p.set_visible(False)
     return ep
 
-def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visible=True, dim=2, zorder=1, alpha=0.7, fade=[1, 0.15, 0.05], s=9):
+def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visible=True, dim=2, zorder=1, alpha=0.7, fade=[1, 1., 0.5], s=9):
     return {0 : plot_points(ax, complex.P, visible, color='black', s=s, zorder=zorder+2, alpha=alpha*fade[0]),
             1 : plot_edges(ax, complex.P, complex(1), visible, color=edge_color, alpha=alpha*fade[1], zorder=zorder+1, lw=1),
             2 : plot_poly(ax, complex.P, complex(2), visible, color=color, alpha=alpha*fade[2], zorder=zorder)}

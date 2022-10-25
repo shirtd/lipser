@@ -39,7 +39,7 @@ def plot_barcode(dgm, color=COLOR['red'], lw=5, thresh=1e-2, lim=0.3, *args, **k
     return ax
 
 # plt.ion()
-# fig, ax = plt.subplots(figsize=(12,9))
+fig, ax = plt.subplots(figsize=(12,9))
 
 
 if __name__ == '__main__':
@@ -63,20 +63,49 @@ if __name__ == '__main__':
     EPSILON = 2
     rips = RipsComplex(P, EPSILON)
     filt = Filtration(rips, 'dist')
-    dgm = Diagram(rips, filt, verbose=True)
+    # dgm = Diagram(rips, filt, verbose=True)
+
+    ax.axis('off')
+    ax.axis('equal')
+    if SCALE is not None:
+        ax.set_xlim(-SCALE, SCALE)
+        ax.set_ylim(-SCALE, SCALE)
 
 
-    NAME = 'barcode'
-    ax = plot_barcode(dgm.diagram[1], lw=5,lim=EPSILON/2)
+    # NAME = 'barcode'
+    # ax = plot_barcode(dgm.diagram[1], lw=5,lim=EPSILON/2)
+    #
+    # DIR = "figures"
+    # NAME = "barcode"
+    # dout = os.path.join(DIR)
+    # if not os.path.exists(dout):
+    #     os.makedirs(dout)
+    # fout = os.path.join(dout, f"{NAME}{SEED}-{RESOLUTION}w{int(10*WEIGHT)}d{int(100*EPSILON)}.png")
+    # print(f"saving {fout}")
+    # plt.savefig(fout, dpi=DPI)
 
-    DIR = "figures"
-    NAME = "barcode"
-    dout = os.path.join(DIR)
-    if not os.path.exists(dout):
-        os.makedirs(dout)
-    fout = os.path.join(dout, f"{NAME}{SEED}-{RESOLUTION}w{int(10*WEIGHT)}d{int(100*EPSILON)}.png")
-    print(f"saving {fout}")
-    plt.savefig(fout, dpi=DPI)
+    for EPSILON in CUTS:
+        rips = RipsComplex(P, EPSILON)
+        rips_plt = plot_rips(ax, rips, alpha=1/(1+EPSILON), zorder=1, fade=[1,0.5, 0]) # , alpha=1/MULT)
+        # ax.scatter(P[:,0], P[:,1], s=9, color='black', alpha=0.7, zorder=1)
+        # balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, color=COLOR['red'], zorder=0, alpha=0.1)
+
+        DIR = "figures"
+        NAME = "graph"
+        dout = os.path.join(DIR, f"circle_{NAME}{SEED}w{int(10*WEIGHT)}")
+        if not os.path.exists(dout):
+            os.makedirs(dout)
+
+        fout = os.path.join(dout, f"{NAME}{SEED}-{RESOLUTION}w{int(10*WEIGHT)}d{int(100*EPSILON)}.png")
+        print(f"saving {fout}")
+        plt.savefig(fout, dpi=DPI)
+
+        ax.cla()
+        ax.axis('off')
+        ax.axis('equal')
+        if SCALE is not None:
+            ax.set_xlim(-SCALE, SCALE)
+            ax.set_ylim(-SCALE, SCALE)
 
 
     # for seed in range(10):

@@ -49,15 +49,15 @@ class SampleData(Sample, DataFile):
 
 class GaussianSurface(Surface):
     def __init__(self, resolution, shape, *args, **kwargs):
-        grid = get_grid(resolution, shape)
+        grid = make_grid(resolution, shape)
         surface = mk_gauss(grid[0], grid[1], *args, **kwargs)
         Surface.__init__(self, surface, grid)
 
 class ScalarField(Surface):
     def __init__(self, surface, grid, constant=None):
         self.function = surface.flatten()
-        self.constant = lipschitz(self.function, grid) if constant is None else self.constant
-        Surface.__init__(self, surface, self._get_grid(surface, grid, self.constant) if grid is None else grid)
+        Surface.__init__(self, surface, grid)
+        self.constant = constant 
     def __call__(self, x):
         return self.function[x]
     def __getitem__(self, i):
