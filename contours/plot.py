@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy.linalg as la
 import numpy as np
+import os
 
 from lips.util import lmap
 from contours.style import COLOR
@@ -59,10 +60,10 @@ def plot_points(ax, points, visible=True, **kwargs):
     p.set_visible(visible)
     return p
 
-def plot_balls(ax, P, F, **kwargs):
+def plot_balls(ax, P, F, alpha=0.2, **kwargs):
     balls = []
     for p,f in zip(P, F):
-        s = plt.Circle(p, f, **kwargs)
+        s = plt.Circle(p, f, alpha=alpha, **kwargs)
         balls.append(s)
         ax.add_patch(s)
     return balls
@@ -87,6 +88,39 @@ def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visibl
             1 : plot_edges(ax, complex.P, complex(1), visible, color=edge_color, alpha=alpha*fade[1], zorder=zorder+1, lw=1),
             2 : plot_poly(ax, complex.P, complex(2), visible, color=color, alpha=alpha*fade[2], zorder=zorder)}
 
+def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300):
+    rips_plt = {k : plot_rips(ax, rips, **v) for k,v in keys.items()}
+    if save and not os.path.exists(dir):
+        os.makedirs(dir)
+    for i, t in enumerate(levels):
+        for d in (1,2):
+            for s in rips(d):
+                for k,v in rips_plt.items():
+                    if s.data[k] <= t:
+                        rips_plt[k][d][s].set_visible(not keys[k]['visible'])
+        plt.pause(wait)
+        if save:
+            fname = os.path.join(dir, f'{name}{i}.png')
+            print(f'saving {fname}')
+            plt.savefig(fname, dpi=dpi, transparent=True)
+    return rips_plt
+
+def plot_offset_filtration(ax, sample, constant, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300):
+    offset_plt = {  'max' : plot_balls(ax, sample, 2 * sample.function/constant, **keys['max']),
+                    'min' : plot_balls(ax, sample, 2 * sample.function/constant, **keys['min'])}
+    if save and not os.path.exists(dir):
+        os.makedirs(dir)
+    for i, t in enumerate(levels):
+        for j,f in enumerate(sample.function):
+            fs = {'max' : (t - f) / constant, 'min' : (f - t) / constant}
+            for k,v in offset_plt.items():
+                v[j].set_radius(fs[k] if fs[k] > 0 else 0)
+        plt.pause(wait)
+        if save:
+            fname = os.path.join(dir, f'{name}{i}.png')
+            print(f'saving {fname}')
+            plt.savefig(fname, dpi=dpi, transparent=True)
+    return offset_plt
 
 
 # max_plot = plot_rips(ax, P[:,:2], K, THRESH, COLOR['blue'], False, zorder=2)

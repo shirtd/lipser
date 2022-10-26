@@ -1,13 +1,14 @@
+from itertools import combinations
+import numpy.linalg as la
+import dionysus as dio
+import diode
+
 from lips.topology.complex.base import Complex
 from lips.topology.complex.cellular import DualComplex
 from lips.topology.complex.simplicial import SimplicialComplex
 from lips.geometry.util import circumcenter, circumradius
 from lips.topology.util import in_bounds, to_path
-
 from lips.util import stuple, tqit
-
-import dionysus as dio
-import diode
 
 
 class EmbeddedComplex(Complex):
@@ -56,3 +57,25 @@ class RipsComplex(SimplicialComplex, EmbeddedComplex):
         return True
     def to_dict(self):
         return {d : self(d) for d in range(3)}
+    def sublevels(self, sample, key='f'):
+        for s in self:
+            s.data[key] = sample(s).max()
+    def superlevels(self, sample, key='f'):
+        for s in self:
+            s.data[key] = sample(s).min()
+    def lips(self, sample, constant):
+        for s in self(1):
+            sf = sample(s[0]) + sample(s[1])
+            sd = constant * s.data['dist']
+            s.data['max'] = (sf + sd) / 2
+            s.data['min'] = (sf - sd) / 2
+        for s in self(2):
+            s.data['max'] = max(self[e].data['max'] for e in combinations(s,2))
+            s.data['min'] = min(self[e].data['min'] for e in combinations(s,2))
+    def lips_sub(self, subsample, constant):
+        for p, s in zip(self.P, self(0)):
+            s.data['max'] = min(f + constant*la.norm(p - s) for s, f in zip(subsample, subsample.function))
+            s.data['min'] = max(f - constant*la.norm(p - s) for s, f in zip(subsample, subsample.function))
+        for s in self(1)+self(2):
+            s.data['max'] = max(self(0)[v].data['max'] for v in s)
+            s.data['min'] = max(self(0)[v].data['min'] for v in s)

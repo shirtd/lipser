@@ -29,6 +29,12 @@ class Sample:
     def __init__(self, points, function):
         self.points = points
         self.function = function
+    def get_levels(self, cuts, margin=0.5):
+        fmin = self.function.min()
+        fmax = self.function.max()
+        diff = fmax - fmin
+        levels = [fmin-diff*margin] + cuts + [fmax+diff*margin]
+        return [(a+b)/2 for a,b in zip(levels[:-1],levels[1:])]
     def __getitem__(self, i):
         return self.points[i]
     def __call__(self, i):
@@ -57,7 +63,7 @@ class ScalarField(Surface):
     def __init__(self, surface, grid, constant=None):
         self.function = surface.flatten()
         Surface.__init__(self, surface, grid)
-        self.constant = constant 
+        self.constant = constant
     def __call__(self, x):
         return self.function[x]
     def __getitem__(self, i):
