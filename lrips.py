@@ -15,7 +15,8 @@ from contours.plot import *
 parser = argparse.ArgumentParser(prog='sample')
 
 parser.add_argument('--dir', default=os.path.join('figures','lips-sub'), help='dir')
-parser.add_argument('--surf', default=None, help='surf file')
+# parser.add_argument('--surf', default=None, help='surf file')
+parser.add_argument('--surf', default='data/surf32.csv', help='surf file')
 parser.add_argument('--file', default='data/surf-sample_1067_1.2e-1.csv', help='sample file')
 parser.add_argument('--sub', default='data/surf-sample_329_2e-1.csv', help='subsample file')
 parser.add_argument('--dpi', type=int, default=300, help='dpi')
@@ -54,10 +55,12 @@ if __name__ == '__main__':
     sample_plt = plot_points(ax, sample, zorder=4, edgecolors='black', facecolors='none', s=5)
     subsample_plt = plot_points(ax, subsample, c='black', s=10, zorder=5)
 
+
     if args.surf is not None:
         grid = make_grid(CFG['res'], CFG['shape'])
         surf = ScalarFieldData(args.surf, grid, CFG['lips'])
         surf_plt = plot_surface(ax, surf, CFG['cuts'], COLORS)
+        # offset_plt = plot_balls(ax, sample.points, 1.2*np.ones(len(sample.points)) * sample.radius / 2, color=COLOR['red'], alpha=0.2, zorder=1)
     else:
         rips = RipsComplex(sample.points, sample.radius*args.mult)
         rips.lips_sub(subsample, CFG['lips'])
