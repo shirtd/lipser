@@ -41,10 +41,11 @@ def init_surface(ax, xlim=(-3,3), ylim=(-2,2)):
     ax.set_ylim(*ylim)
     plt.tight_layout()
 
-def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0, xlim=(-3,3), ylim=(-2,2)):
+def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0, xlim=(-3,3), ylim=(-2,2), init=False):
     res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, alpha=alpha, zorder=0),
             'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, colors=colors, zorder=0)}
-    init_surface(ax, xlim, ylim)
+    if init:
+        init_surface(ax, xlim, ylim)
     return res
 
 def plot_rainier(ax, surf, cuts, colors, alpha=0.5, zorder=0):
@@ -88,7 +89,7 @@ def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visibl
             1 : plot_edges(ax, complex.P, complex(1), visible, color=edge_color, alpha=alpha*fade[1], zorder=zorder+1, lw=1),
             2 : plot_poly(ax, complex.P, complex(2), visible, color=color, alpha=alpha*fade[2], zorder=zorder)}
 
-def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300):
+def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300, hide={}):
     rips_plt = {k : plot_rips(ax, rips, **v) for k,v in keys.items()}
     if save and not os.path.exists(dir):
         os.makedirs(dir)
@@ -96,8 +97,9 @@ def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True,
         for d in (1,2):
             for s in rips(d):
                 for k,v in rips_plt.items():
-                    if s.data[k] <= t:
-                        rips_plt[k][d][s].set_visible(not keys[k]['visible'])
+                    if not hide[k]:
+                        if s.data[k] <= t:
+                            rips_plt[k][d][s].set_visible(not keys[k]['visible'])
         plt.pause(wait)
         if save:
             fname = os.path.join(dir, f'{name}{i}.png')
@@ -105,7 +107,10 @@ def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True,
             plt.savefig(fname, dpi=dpi, transparent=True)
     return rips_plt
 
-def plot_offset_filtration(ax, sample, constant, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300):
+def plot_offset_filtration(ax, sample, constant, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300, hide={}):
+    if 'min' in hide and hide['min'] and 'min' in keys:
+        keys['min']['visible'] = False
+
     offset_plt = {  'max' : plot_balls(ax, sample, 2 * sample.function/constant, **keys['max']),
                     'min' : plot_balls(ax, sample, 2 * sample.function/constant, **keys['min'])}
     if save and not os.path.exists(dir):
@@ -114,7 +119,8 @@ def plot_offset_filtration(ax, sample, constant, levels, keys, name, dir='figure
         for j,f in enumerate(sample.function):
             fs = {'max' : (t - f) / constant, 'min' : (f - t) / constant}
             for k,v in offset_plt.items():
-                v[j].set_radius(fs[k] if fs[k] > 0 else 0)
+                if not hide[k]:
+                    v[j].set_radius(fs[k] if fs[k] > 0 else 0)
         plt.pause(wait)
         if save:
             fname = os.path.join(dir, f'{name}{i}.png')
