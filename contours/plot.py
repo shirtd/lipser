@@ -41,9 +41,10 @@ def init_surface(ax, xlim=(-3,3), ylim=(-2,2)):
     ax.set_ylim(*ylim)
     plt.tight_layout()
 
-def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0, xlim=(-3,3), ylim=(-2,2), init=False):
+def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0, xlim=(-3,3), ylim=(-2,2), init=False, contour_color=None):
+    contour_kw = {'colors' : colors} if contour_color is None else {'color' : contour_color}
     res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, alpha=alpha, zorder=0),
-            'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, colors=colors, zorder=0)}
+            'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, zorder=0, **contour_kw)}
     if init:
         init_surface(ax, xlim, ylim)
     return res

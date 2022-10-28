@@ -60,9 +60,9 @@ if __name__ == '__main__':
     P = X + (np.random.rand(RESOLUTION,2)-1/2) * WEIGHT
     # ax.scatter(P[:,0], P[:,1], s=5, color='black', alpha=1, zorder=1)
 
-    EPSILON = 2
-    rips = RipsComplex(P, EPSILON)
-    filt = Filtration(rips, 'dist')
+    # EPSILON = 2
+    # rips = RipsComplex(P, EPSILON)
+    # filt = Filtration(rips, 'dist')
     # dgm = Diagram(rips, filt, verbose=True)
 
     ax.axis('off')
@@ -84,21 +84,26 @@ if __name__ == '__main__':
     # print(f"saving {fout}")
     # plt.savefig(fout, dpi=DPI)
 
+    CLR = 'pink1'
+
     for EPSILON in CUTS:
-        rips = RipsComplex(P, EPSILON)
-        rips_plt = plot_rips(ax, rips, alpha=1/(1+EPSILON), zorder=1, fade=[1,0.5, 0]) # , alpha=1/MULT)
-        # ax.scatter(P[:,0], P[:,1], s=9, color='black', alpha=0.7, zorder=1)
-        # balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, color=COLOR['red'], zorder=0, alpha=0.1)
+        # rips = RipsComplex(P, EPSILON)
+        # rips_plt = plot_rips(ax, rips, alpha=1/(1+EPSILON), zorder=1, fade=[1,0.15, 0.1]) # , alpha=1/MULT)
+        ax.scatter(P[:,0], P[:,1], s=7, color='black', alpha=1, zorder=5)
+        # balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, facecolor=COLOR['red'], edgecolor='none', zorder=0, alpha=0.1)
+        balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, facecolor=COLOR[CLR], edgecolor='none', zorder=0, alpha=1)
 
         DIR = "figures"
-        NAME = "graph"
+        # NAME = 'rips'
+        # NAME = "graph"
+        NAME = f"offset-{CLR}"
         dout = os.path.join(DIR, f"circle_{NAME}{SEED}w{int(10*WEIGHT)}")
         if not os.path.exists(dout):
             os.makedirs(dout)
 
         fout = os.path.join(dout, f"{NAME}{SEED}-{RESOLUTION}w{int(10*WEIGHT)}d{int(100*EPSILON)}.png")
         print(f"saving {fout}")
-        plt.savefig(fout, dpi=DPI)
+        plt.savefig(fout, dpi=DPI, transparent=True)
 
         ax.cla()
         ax.axis('off')
