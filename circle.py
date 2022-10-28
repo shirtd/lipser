@@ -88,15 +88,16 @@ if __name__ == '__main__':
 
     for EPSILON in CUTS:
         # rips = RipsComplex(P, EPSILON)
-        # rips_plt = plot_rips(ax, rips, alpha=1/(1+EPSILON), zorder=1, fade=[1,0.15, 0.1]) # , alpha=1/MULT)
+        # rips_plt = plot_rips(ax, rips, alpha=1, zorder=1, fade=[1,0.5, 0.0]) # , alpha=1/MULT)
         ax.scatter(P[:,0], P[:,1], s=7, color='black', alpha=1, zorder=5)
-        # balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, facecolor=COLOR['red'], edgecolor='none', zorder=0, alpha=0.1)
-        balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, facecolor=COLOR[CLR], edgecolor='none', zorder=0, alpha=1)
+        balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, facecolor=COLOR['red'], edgecolor='none', zorder=0, alpha=0.1)
+        # balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, facecolor=COLOR[CLR], edgecolor='none', zorder=0, alpha=1)
 
         DIR = "figures"
         # NAME = 'rips'
         # NAME = "graph"
-        NAME = f"offset-{CLR}"
+        NAME = f"offset"
+        # NAME = f"offset-union-{CLR}"
         dout = os.path.join(DIR, f"circle_{NAME}{SEED}w{int(10*WEIGHT)}")
         if not os.path.exists(dout):
             os.makedirs(dout)

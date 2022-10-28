@@ -22,6 +22,7 @@ parser.add_argument('--save', action='store_true', help='save')
 parser.add_argument('--mult', type=float, default=1.15, help='thresh mult')
 parser.add_argument('--wait', type=float, default=0.5, help='wait')
 parser.add_argument('--tag', default=None, help='tag directory and file')
+parser.add_argument('--color', action='store_true', help='color complex my function values')
 
 plt.ion()
 fig, ax = plt.subplots(figsize=(10,8))
@@ -42,11 +43,20 @@ if __name__ == '__main__':
     init_surface(ax, (-xl,xl), (-yl,yl))
 
     sample = SampleData(args.file)
-    rips = RipsComplex(sample.points, sample.radius*args.mult)
+    # rips = RipsComplex(sample.points, sample.radius*args.mult)
+    rips = RipsComplex(sample.points, 1.75*sample.radius)
     rips.sublevels(sample)
 
     levels = sample.get_levels(CFG['cuts'])
-    name = f'{sample.name}_lips_tri{args.tag}'
+    name = f'{sample.name}_rips2_{args.tag}'
+
+    if args.color:
+        name += '_color'
+        del keys['f']['edge_color']
+        del keys['f']['color']
+        # keys['f']['edge_colors'] = [get_color(sample(t).max(), CFG['cuts'], COLORS) for t in rips(1)]
+        keys['f']['tri_colors'] = [get_color(sample(t).max(), CFG['cuts'], COLORS) for t in rips(2)]
+        keys['f']['fade'] = [1, 0.5, 0.3] # [1, 0.7, 0.4] #
 
     sample_plt = plot_points(ax, sample, zorder=4, c='black', s=9)
     rips_plt = plot_rips_filtration(ax, rips, levels, keys, name, **kwargs)

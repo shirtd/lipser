@@ -41,9 +41,9 @@ def init_surface(ax, xlim=(-3,3), ylim=(-2,2)):
     ax.set_ylim(*ylim)
     plt.tight_layout()
 
-def plot_surface(ax, surf, cuts, colors, alpha=0.5, zorder=0, xlim=(-3,3), ylim=(-2,2), init=False, contour_color=None):
-    contour_kw = {'colors' : colors} if contour_color is None else {'color' : contour_color}
-    res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, alpha=alpha, zorder=0),
+def plot_surface(ax, surf, cuts, colors, zorder=0, xlim=(-3,3), ylim=(-2,2), init=False, contour_color=None):
+    contour_kw = {'colors' : [colors[0]]+ colors} if contour_color is None else {'color' : contour_color}
+    res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, zorder=0),
             'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, zorder=0, **contour_kw)}
     if init:
         init_surface(ax, xlim, ylim)
@@ -70,25 +70,31 @@ def plot_balls(ax, P, F, alpha=0.2, **kwargs):
         ax.add_patch(s)
     return balls
 
-def plot_poly(ax, P, T, visible=True, **kwargs):
-    tp = {t : plt.Polygon(P[t,:], **kwargs) for t in T}
+def plot_poly(ax, P, T, visible=True, color=None, color_list=None, **kwargs):
+    if color_list is None:
+        color_list = [color for _ in T]
+    tp = {t : plt.Polygon(P[t,:], color=c, **kwargs) for c,t in zip(color_list,T)}
     lmap(lambda t: ax.add_patch(t), tp.values())
     if not visible:
         for t,p in tp.items():
             p.set_visible(False)
     return tp
 
-def plot_edges(ax, P, E, visible=True, **kwargs):
-    ep = {e : ax.plot(P[e,0], P[e,1], **kwargs)[0] for e in E}
+def plot_edges(ax, P, E, visible=True, color=None, color_list=None, **kwargs):
+    if color_list is None:
+        color_list = [color for _ in E]
+    ep = {e : ax.plot(P[e,0], P[e,1], color=c, **kwargs)[0] for c,e in zip(color_list,E)}
     if not visible:
         for e,p in ep.items():
             p.set_visible(False)
     return ep
 
-def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visible=True, dim=2, zorder=1, alpha=0.7, fade=[1, 0.6, 0.3], s=9):
+def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visible=True, dim=2, zorder=1, alpha=0.7, fade=[1, 0.6, 0.3], s=9, tri_colors=None, edge_colors=None):
+    edge_kw = {'color' : edge_color} if edge_colors is None else {'color_list' : edge_colors}
+    tri_kw = {'color' : color} if tri_colors is None else {'color_list' : tri_colors}
     return {0 : plot_points(ax, complex.P, visible, color='black', s=s, zorder=zorder+2, alpha=alpha*fade[0]),
-            1 : plot_edges(ax, complex.P, complex(1), visible, color=edge_color, alpha=alpha*fade[1], zorder=zorder+1, lw=1),
-            2 : plot_poly(ax, complex.P, complex(2), visible, color=color, alpha=alpha*fade[2], zorder=zorder)}
+            1 : plot_edges(ax, complex.P, complex(1), visible, alpha=alpha*fade[1], zorder=zorder+1, lw=1, **edge_kw),
+            2 : plot_poly(ax, complex.P, complex(2), visible, alpha=alpha*fade[2], zorder=zorder, **tri_kw)}
 
 def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300, hide={}):
     rips_plt = {k : plot_rips(ax, rips, **v) for k,v in keys.items()}
@@ -98,7 +104,7 @@ def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True,
         for d in (1,2):
             for s in rips(d):
                 for k,v in rips_plt.items():
-                    if not hide[k]:
+                    if not (k in hide and hide[k]):
                         if s.data[k] <= t:
                             rips_plt[k][d][s].set_visible(not keys[k]['visible'])
         plt.pause(wait)
@@ -120,8 +126,23 @@ def plot_offset_filtration(ax, sample, constant, levels, keys, name, dir='figure
         for j,f in enumerate(sample.function):
             fs = {'max' : (t - f) / constant, 'min' : (f - t) / constant}
             for k,v in offset_plt.items():
-                if not hide[k]:
+                if not (k in hide and hide[k]):
                     v[j].set_radius(fs[k] if fs[k] > 0 else 0)
+        plt.pause(wait)
+        if save:
+            fname = os.path.join(dir, f'{name}{i}.png')
+            print(f'saving {fname}')
+            plt.savefig(fname, dpi=dpi, transparent=True)
+    return offset_plt
+
+def plot_sfa(ax, sample, levels, kw, name, dir='figures', save=True, wait=0.5, dpi=300):
+    offset_plt = plot_balls(ax, sample, np.ones(len(sample)) * sample.radius/2, alpha=0, **kw)
+    if save and not os.path.exists(dir):
+        os.makedirs(dir)
+    for i, t in enumerate(levels):
+        for j,f in enumerate(sample.function):
+            if f <= t:
+                offset_plt[j].set_alpha(1)
         plt.pause(wait)
         if save:
             fname = os.path.join(dir, f'{name}{i}.png')
