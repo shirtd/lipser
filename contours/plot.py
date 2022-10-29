@@ -124,7 +124,7 @@ def plot_offset_filtration(ax, sample, constant, levels, keys, name, dir='figure
         os.makedirs(dir)
     for i, t in enumerate(levels):
         for j,f in enumerate(sample.function):
-            fs = {'max' : (t - f) / constant, 'min' : (f - t) / constant}
+            fs = {'max' : (t - f) / constant / 2, 'min' : (f - t) / constant}
             for k,v in offset_plt.items():
                 if not (k in hide and hide[k]):
                     v[j].set_radius(fs[k] if fs[k] > 0 else 0)

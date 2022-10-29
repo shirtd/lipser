@@ -25,6 +25,8 @@ parser.add_argument('--rips', action='store_true', help='plot rips not balls')
 parser.add_argument('--tag', default=None, help='tag directory and file')
 parser.add_argument('--nomin', action='store_true', help='dont plot min extension')
 parser.add_argument('--nomax', action='store_true', help='dont plot max extension')
+parser.add_argument('--union', action='store_true', help='union')
+
 
 
 plt.ion()
@@ -56,7 +58,9 @@ if __name__ == '__main__':
 
     levels = sample.get_levels(CFG['cuts'])
     no_str = 'min' if args.nomax else 'max' if args.nomin else ''
-    name = f'{sample.name}_lips{no_str}{args.tag}'
+    union_str = '-union' if args.union else ''
+    name = f'{sample.name}_lips{union_str}{no_str}{args.tag}'
+
 
     if args.rips:
         name = f'{name}_rips'
@@ -69,8 +73,12 @@ if __name__ == '__main__':
         rips_plt = plot_rips_filtration(ax, rips, levels, keys, name, **kwargs)
     else:
         name = f'{name}_balls'
-        keys['max']['facecolor'] = COLOR['blue']
-        keys['min']['facecolor'] = COLOR['red']
+        keys['max']['facecolor'] = COLOR['blue1'] if args.union else COLOR['blue']
+        keys['min']['facecolor'] = COLOR['pink1'] if args.union else COLOR['red']
+
+        if args.union:
+            keys['max']['alpha'] = 1
+            keys['min']['alpha'] = 1
 
         keys['max']['edgecolor'] = 'none' # keys['max']['color']
         keys['min']['edgecolor'] = 'none' # keys['min']['color']
