@@ -2,6 +2,7 @@ from functools import partial, reduce
 from itertools import combinations
 from multiprocessing import Pool
 import numpy.linalg as la
+import dionysus as dio
 from tqdm import tqdm
 import pickle as pkl
 import numpy as np
@@ -35,6 +36,12 @@ def to_path(vertices, nbrs):
             path = path[::-1]
             cur = path[-1]
     return path
+
+def sfa_dio(f, inf=-0.1):
+    filt = dio.fill_freudenthal(f)
+    hom = dio.homology_persistence(filt)
+    dgms = dio.init_diagrams(hom, filt)
+    return [np.array([[p.birth, p.death if p.death < np.inf else inf] for p in d]) if len(d) else np.ndarray((0,2)) for d in dgms]
 
 # def to_path(vertices, nbrs):
 #     V = vertices.copy()

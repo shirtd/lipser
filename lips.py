@@ -1,88 +1,103 @@
-from scipy.spatial import KDTree
-import numpy.linalg as la
-import dionysus as dio
 import numpy as np
 import argparse
 import os, sys
 
-from itertools import combinations
-from lips.topology import RipsComplex
-from contours.surface import make_grid, ScalarFieldData, SampleData
-from contours.config import CONFIG
-from contours.style import COLOR
+from lips.topology.util import sfa_dio
+from lips.topology import RipsComplex, Filtration, Diagram
+from contours import CONFIG, COLOR
+from contours.surface import *
 from contours.plot import *
 
 
-parser = argparse.ArgumentParser(prog='sample')
+parser = argparse.ArgumentParser(prog='lips')
 
-parser.add_argument('--dir', default=os.path.join('figures','lips'), help='dir')
-parser.add_argument('--file', default='data/surf-sample_1067_1.2e-1.csv', help='sample file')
-parser.add_argument('--dpi', type=int, default=300, help='dpi')
-parser.add_argument('--save', action='store_true', help='save')
-parser.add_argument('--mult', type=float, default=1.1, help='thresh mult')
-parser.add_argument('--wait', type=float, default=0.5, help='wait')
-parser.add_argument('--rips', action='store_true', help='plot rips not balls')
-parser.add_argument('--tag', default=None, help='tag directory and file')
+parser.add_argument('--surf', default='data/surf32.csv', help='surface file')
+parser.add_argument('--file', default='data/surf-sample_1067_1.3e-1.csv', help='sample file')
+parser.add_argument('--sub-file', default='data/surf-sample_329_2e-1.csv', help='subsample file')
+parser.add_argument('--mult', type=float, default=1., help='radius multiplier')
 parser.add_argument('--nomin', action='store_true', help='dont plot min extension')
 parser.add_argument('--nomax', action='store_true', help='dont plot max extension')
-parser.add_argument('--union', action='store_true', help='union')
+parser.add_argument('--show', action='store_true', help='show plot')
+parser.add_argument('--wait', type=float, default=0.5, help='wait time (if --show)')
+parser.add_argument('--save', action='store_true', help='save plot')
+parser.add_argument('--dpi', type=int, default=300, help='image dpi')
+parser.add_argument('--tag', default='', help='file tag')
+parser.add_argument('--dir', default=os.path.join('figures', 'lips'), help='output directory')
+parser.add_argument('--rips', action='store_true', help='run rips')
+parser.add_argument('--union', action='store_true', help='run offset union')
+parser.add_argument('--sub', action='store_true', help='run subsample rips')
+parser.add_argument('--barcode', action='store_true', help='run barcode')
 
-
-
-plt.ion()
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    args.tag = "" if args.tag is None else f"_{args.tag}"
-    args.dir = f"{args.dir}{args.tag}"
-    if args.nomin and args.nomax:
-        args.nomin, args.nomax = False, False
-
-    kwargs = {'dir' : args.dir, 'save' : args.save, 'wait' : args.wait, 'dpi' : args.dpi,
-                'hide' : {'min' : args.nomin, 'max' : args.nomax}}
-    keys = {'max' : {'visible' : False, 'zorder' : 2},
-            'min' : {'visible' : True, 'zorder' : 1}}
     CFG = CONFIG['rainier' if 'rainier' in  args.file else 'surf']
-
-    fig, ax = plt.subplots(figsize=(10*CFG['shape'][0],10*CFG['shape'][1]))
-    xl, yl = CFG['shape'][0]*CFG['pad'][0], CFG['shape'][1]*CFG['pad'][1]
-    COLORS = [COLOR[k] for k in CFG['colors']]
-    init_surface(ax, (-xl,xl), (-yl,yl))
+    COLORS = [COLOR[c] for c in CFG['colors']]
+    kwargs = {  'filt'      : { 'dir' : args.dir, 'save' : args.save, 'wait' : args.wait if args.show else None,
+                                'dpi' : args.dpi, 'hide'  : { 'min' : args.nomin, 'max' : args.nomax}},
+                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 5 if args.sub else 9,
+                                'facecolors' : 'none' if args.sub else 'black'},
+                'subsample' : { 'c' : 'black', 's' : 10, 'zorder' : 5},
+                'rips'      : { 'max'   : { 'visible' : False, 'zorder' : 2, 'color' : COLOR['blue']},
+                                'min'   : { 'visible' : not (args.sub or args.nomin), 'zorder' : 1, 'color' : COLOR['red']}},
+                'offset'    : { 'max'   : { 'visible' : not args.nomax, 'zorder' : 2, 'alpha' : 1 if args.union else 0.1,
+                                            'color' : COLOR['blue1'] if args.union else COLOR['blue']},
+                                'min'   : { 'visible' : True, 'zorder' : 1, 'alpha' : 1 if args.union else 0.1,
+                                            'color' : COLOR['red1'] if args.union else COLOR['red']}},
+                'barcode'   : { 'cuts' : CFG['cuts'], 'colors' : [COLOR[c] for c in CFG['colors']]}}
 
     sample = SampleData(args.file)
-    sample_plt = plot_points(ax, sample, zorder=4, c='black', s=9)
-
-    # name = f'{sample.name}_subsample_lips{args.tag}'
-    # no_str = f'_no{'min' if args.nomin else 'max'}' if (args.nomin or args.nomax) else ''
-
     levels = sample.get_levels(CFG['cuts'])
-    no_str = 'min' if args.nomax else 'max' if args.nomin else ''
+
+    if args.sub or args.barcode:
+        subsample = SampleData(args.sub_file)
+
+    sub_str = f'sub-{subsample.name}' if args.sub else ''
     union_str = '-union' if args.union else ''
-    name = f'{sample.name}_lips{union_str}{no_str}{args.tag}'
+    no_str = 'min' if args.nomax else 'max' if args.nomin else ''
+    name = f'{sample.name}_{sub_str}lips{union_str}{no_str}{args.tag}'
 
+    if args.barcode:
+        fig, ax = init_barcode()
+        grid = make_grid(CFG['res'], CFG['shape'])
+        surf = ScalarFieldData(args.surf, grid)
 
-    if args.rips:
-        name = f'{name}_rips'
-        keys['max']['color'] = COLOR['blue']
-        keys['min']['color'] = COLOR['red']
+        rips = RipsComplex(sample.points, sample.radius * args.mult)
+        rips.lips_sub(subsample, CFG['lips'])
+        min_filt, max_filt = Filtration(rips, 'min'), Filtration(rips, 'max')
+        hom =  Diagram(rips, min_filt, pivot=max_filt, verbose=True)
 
-        rips = RipsComplex(sample.points, sample.radius*args.mult)
-        rips.lips(sample, CFG['lips'])
+        sample_dgms, _ = hom.get_diagram(rips, min_filt, max_filt)
+        surf_dgms = sfa_dio(surf.surface)
 
-        rips_plt = plot_rips_filtration(ax, rips, levels, keys, name, **kwargs)
+        plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'])
+        plot_barcode(ax[1], surf_dgms[1], **kwargs['barcode'])
+
+        if args.save:
+            if not os.path.exists(args.dir):
+                print(f'making directory {args.dir}')
+                os.makedirs(args.dir)
+            fpath = os.path.join(args.dir, f'{name}_barcode.png')
+            print(f'saving {fpath}')
+            plt.savefig(fpath, dpi=args.dpi, transparent=True)
+        if args.show:
+            plt.show()
     else:
-        name = f'{name}_balls'
-        keys['max']['facecolor'] = COLOR['blue1'] if args.union else COLOR['blue']
-        keys['min']['facecolor'] = COLOR['pink1'] if args.union else COLOR['red']
+        if args.show:
+            plt.ion()
+        fig, ax = init_surface(CFG['shape'], CFG['pad'], 10)
+        sample_plt = plot_points(ax, sample, **kwargs['sample'])
 
-        if args.union:
-            keys['max']['alpha'] = 1
-            keys['min']['alpha'] = 1
-
-        keys['max']['edgecolor'] = 'none' # keys['max']['color']
-        keys['min']['edgecolor'] = 'none' # keys['min']['color']
-
-        if not args.nomax:
-            keys['max']['visible'] = True
-        offset_plt = plot_offset_filtration(ax, sample, CFG['lips'], levels, keys, name, **kwargs)
+        if args.rips or args.sub:
+            name = f'{name}_rips'
+            rips = RipsComplex(sample.points, sample.radius * args.mult)
+            if args.sub:
+                subsample_plt = plot_points(ax, subsample, **kwargs['subsample'])
+                rips.lips_sub(subsample, CFG['lips'])
+            else:
+                rips.lips(sample, CFG['lips'])
+            rips_plt = plot_rips_filtration(ax, rips, levels, kwargs['rips'], name, **kwargs['filt'])
+        else:
+            name = f'{name}_offset'
+            offset_plt = plot_offset_filtration(ax, sample, CFG['lips'], levels, kwargs['offset'], name, **kwargs['filt'])

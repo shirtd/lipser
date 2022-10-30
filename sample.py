@@ -57,18 +57,19 @@ MARGIN = 0 # THRESH/2
 LEVELS = 20 # CUTS
 
 
-def get_sample(fig, ax, S, thresh, P=None, color=COLOR['red'], name='surf-sample', dir='data'):
+def get_sample(fig, ax, S, thresh, P=None, color=COLOR['pink1'], name='surf-sample', dir='data'):
     P = [] if P is None else P
     T = KDTree(S[:,:2])
     def onclick(event):
         p = S[T.query(np.array([event.xdata,event.ydata]))[1]]
-        ax.add_patch(plt.Circle(p, thresh/2, color=color, alpha=0.5, zorder=3))
+        ax.add_patch(plt.Circle(p, thresh/2, color=color, zorder=3))
         ax.scatter(p[0], p[1], c='black', zorder=4, s=10)
         plt.pause(0.1)
         P.append(p)
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
     plt.show()
     fig.canvas.mpl_disconnect(cid)
+    P = sorted(P, key=lambda x: x[2])
     return np.vstack(P)
 
 
@@ -84,8 +85,8 @@ if __name__ == '__main__':
     if args.load is not None:
         sample = SampleData(args.load)
         THRESH = sample.radius if args.thresh is None else args.thresh
-        sample_plt = plot_points(ax, sample, color='black', alpha=0.5, s=5)
-        ball_plt = plot_balls(ax, sample, np.ones(len(sample))*THRESH/2, color=COLOR['salmon'], alpha=0.25)
+        sample_plt = plot_points(ax, sample, color='black', alpha=0.5, s=5, zorder=5)
+        ball_plt = plot_balls(ax, sample, np.ones(len(sample))*THRESH/2, color=COLOR['gray'], alpha=1, zorder=3)
 
     P = get_sample(fig, ax, surf.get_data(), THRESH)
     # if args.load is not None and not args.no_add:
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 
     thresh_s = np.format_float_scientific(THRESH, trim='-')
     name = '%s-sample' % surf.name
-    fname = os.path.join(args.dir, '%s_%d_%s.csv' % (name, len(P), thresh_s))
+    fname = os.path.join(args.dir, '%s-%d-%s.csv' % (name, len(P), thresh_s))
     if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
         print('saving %s' % fname)
         np.savetxt(fname, P)

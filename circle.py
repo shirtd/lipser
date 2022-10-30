@@ -1,151 +1,89 @@
-import matplotlib.pyplot as plt
-
 import numpy as np
-
-from lips.topology import RipsComplex
-from contours.surface import make_grid, ScalarFieldData, SampleData
-from contours.plot import plot_surface, plot_points, plot_rips, plot_balls
-from contours.style import COLOR
-from lips.topology import Filtration, Diagram
-
-from lips.util import format_float
-
+import argparse
 import os
 
+from lips.topology import Filtration, Diagram, RipsComplex
+from contours import CONFIG, COLOR
+from contours.surface import *
+from contours.plot import *
 
-SCALE = 2.8
-WEIGHT = 0.5
-RESOLUTION = 256
-CUTS = [0, 0.07, 0.15, 0.2, 0.27, 0.4, 0.6, 0.75]
 
-DPI = 300
+parser = argparse.ArgumentParser(prog='circle')
 
-# EPSILON = 0.3
-
-def plot_barcode(dgm, color=COLOR['red'], lw=5, thresh=1e-2, lim=0.3, *args, **kwargs):
-    dgm = np.array([p for p in dgm if p[1]-p[0] > thresh])
-
-    if not len(dgm):
-        return None
-    fig, ax = plt.subplots(1, 1, *args, **kwargs)
-    for i, (birth, death) in enumerate(dgm):
-        if death == np.inf:
-            ax.plot([birth, lim], [i, i], c=color, lw=lw, zorder=1)
-            ax.plot([lim, lim*1.1], [i, i], c='black', linestyle='dotted', zorder=0)
-        else:
-            ax.plot([birth, death], [i, i], c=color, lw=lw)
-    ax.get_yaxis().set_visible(False)
-    plt.tight_layout()
-    return ax
-
-# plt.ion()
-fig, ax = plt.subplots(figsize=(12,9))
+parser.add_argument('--scale', type=int, default=CONFIG['circle']['scale'], help='scale')
+parser.add_argument('--seed', type=int, default=CONFIG['circle']['seed'], help='seed')
+parser.add_argument('--weight', type=int, default=CONFIG['circle']['weight'], help='weight')
+parser.add_argument('--res', type=int, default=CONFIG['circle']['res'], help='number of points')
+parser.add_argument('--show', action='store_true', help='show plot')
+parser.add_argument('--wait', type=float, default=0.5, help='wait time (if --show)')
+parser.add_argument('--save', action='store_true', help='save plot')
+parser.add_argument('--dpi', type=int, default=300, help='image dpi')
+parser.add_argument('--tag', default=None, help='file tag')
+parser.add_argument('--dir', default=os.path.join('figures','circle'), help='output directory')
+parser.add_argument('--union', action='store_true', help='run offset union')
+parser.add_argument('--rips', action='store_true', help='run rips')
+parser.add_argument('--graph', action='store_true', help='run graph')
+parser.add_argument('--barcode', action='store_true', help='run barcode')
+parser.add_argument('--thresh', type=float, default=2., help='max rips radius')
 
 
 if __name__ == '__main__':
+    args = parser.parse_args()
 
-    X = np.vstack(( np.sin(np.linspace(-np.pi, np.pi, RESOLUTION)),
-                    np.cos(np.linspace(-np.pi, np.pi, RESOLUTION)))).T
+    kwargs = {  'barcode'   :   {   'lw' : 5, 'lim' : args.thresh/2},
+                'sample'    :   {   's' : 9, 'color' : 'black', 'zorder' : 5, 'alpha' : 1},
+                'rips'      :   {   'alpha' : 1, 'zorder' : 1, 'fade' : [1, 0.3, 0.15]},
+                'graph'     :   {   'alpha' : 1, 'zorder' : 1, 'fade' : [1, 0.3, 0.]},
+                'offset'    :   {   'alpha' : 1 if args.union else 0.1, 'zorder' : 0,
+                                    'color' : COLOR['red1' if args.union else 'red']}}
 
+    if args.show:
+        plt.ion()
 
-    # ax.plot(X[:,0], X[:,1])
+    np.random.seed(args.seed)
 
+    X = np.vstack(( np.sin(np.linspace(-np.pi, np.pi, args.res)),
+                    np.cos(np.linspace(-np.pi, np.pi, args.res)))).T
+    P = X + (np.random.rand(args.res, 2) - 1/2) * args.weight
 
-    # TODO union of balls
+    if args.save:
+        w_str = np.format_float_scientific(args.weight, trim='-')
+        # dout = os.path.join(args.dir, f"circle{args.seed}-{args.res}w{w_str}")
+        if not os.path.exists(args.dir):
+            print(f'making directory {args.dir}')
+            os.makedirs(args.dir)
 
-    plt.ion()
-    SEED = 0
-    np.random.seed(SEED)
+    if args.barcode:
+        rips = RipsComplex(P, args.thresh)
+        filt = Filtration(rips, 'dist')
+        dgm = Diagram(rips, filt, verbose=True)
 
-    P = X + (np.random.rand(RESOLUTION,2)-1/2) * WEIGHT
-    # ax.scatter(P[:,0], P[:,1], s=5, color='black', alpha=1, zorder=1)
+        ax = plot_barcode(dgm.diagram[1], **kwargs['barcode'])
+        if args.save:
+            fout = os.path.join(args.dir, f"circle{args.seed}-{args.res}w{w_str}_barcode.png")
+            print(f"saving {fout}")
+            plt.savefig(fout, dpi=args.dpi, transparent=True)
+    else:
+        name = 'rips' if args.rips else 'graph' if args.graph else 'offset-union' if args.union else 'offset'
+        fig, ax = plt.subplots(figsize=(12,9))
+        reset_plot(ax, args.scale)
 
-    # EPSILON = 2
-    # rips = RipsComplex(P, EPSILON)
-    # filt = Filtration(rips, 'dist')
-    # dgm = Diagram(rips, filt, verbose=True)
+        for t in CONFIG['circle']['cuts']:
+            ax.scatter(P[:,0], P[:,1], **kwargs['sample'])
+            if args.rips or args.graph:
+                rips = RipsComplex(P, t)
+                rips_plt = plot_rips(ax, rips, **kwargs['graph' if args.graph else 'rips'])
+            else:
+                ax.scatter(P[:,0], P[:,1], **kwargs['sample'])
+                balls_plt = plot_balls(ax, P, np.ones(len(P)) * t/2, **kwargs['offset'])
 
-    ax.axis('off')
-    ax.axis('equal')
-    if SCALE is not None:
-        ax.set_xlim(-SCALE, SCALE)
-        ax.set_ylim(-SCALE, SCALE)
+            if args.show:
+                plt.pause(args.wait)
+            if args.save:
+                # t_str = np.format_float_scientific(t, trim='-')
+                fout = os.path.join(args.dir, f"circle{args.seed}-{args.res}w{w_str}_{name}{int(t*100)}.png")
+                print(f"saving {fout}")
+                plt.savefig(fout, dpi=args.dpi, transparent=True)
 
-
-    # NAME = 'barcode'
-    # ax = plot_barcode(dgm.diagram[1], lw=5,lim=EPSILON/2)
-    #
-    # DIR = "figures"
-    # NAME = "barcode"
-    # dout = os.path.join(DIR)
-    # if not os.path.exists(dout):
-    #     os.makedirs(dout)
-    # fout = os.path.join(dout, f"{NAME}{SEED}-{RESOLUTION}w{int(10*WEIGHT)}d{int(100*EPSILON)}.png")
-    # print(f"saving {fout}")
-    # plt.savefig(fout, dpi=DPI)
-
-    CLR = 'pink1'
-
-    for EPSILON in CUTS:
-        # rips = RipsComplex(P, EPSILON)
-        # rips_plt = plot_rips(ax, rips, alpha=1, zorder=1, fade=[1,0.5, 0.0]) # , alpha=1/MULT)
-        ax.scatter(P[:,0], P[:,1], s=7, color='black', alpha=1, zorder=5)
-        balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, facecolor=COLOR['red'], edgecolor='none', zorder=0, alpha=0.1)
-        # balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, facecolor=COLOR[CLR], edgecolor='none', zorder=0, alpha=1)
-
-        DIR = "figures"
-        # NAME = 'rips'
-        # NAME = "graph"
-        NAME = f"offset"
-        # NAME = f"offset-union-{CLR}"
-        dout = os.path.join(DIR, f"circle_{NAME}{SEED}w{int(10*WEIGHT)}")
-        if not os.path.exists(dout):
-            os.makedirs(dout)
-
-        fout = os.path.join(dout, f"{NAME}{SEED}-{RESOLUTION}w{int(10*WEIGHT)}d{int(100*EPSILON)}.png")
-        print(f"saving {fout}")
-        plt.savefig(fout, dpi=DPI, transparent=True)
-
-        ax.cla()
-        ax.axis('off')
-        ax.axis('equal')
-        if SCALE is not None:
-            ax.set_xlim(-SCALE, SCALE)
-            ax.set_ylim(-SCALE, SCALE)
-
-
-    # for seed in range(10):
-    #     ax.axis('off')
-    #     ax.axis('equal')
-    #     if SCALE is not None:
-    #         ax.set_xlim(-SCALE, SCALE)
-    #         ax.set_ylim(-SCALE, SCALE)
-    #
-    #     SEED = seed
-    #     np.random.seed(seed)
-    #
-    #     P = X + (np.random.rand(RESOLUTION,2)-1/2) * WEIGHT
-    #     # ax.scatter(P[:,0], P[:,1], s=5, color='black', alpha=1, zorder=1)
-    #
-    #     for EPSILON in CUTS:
-    #         # rips = RipsComplex(P, EPSILON)
-    #         # rips_plt = plot_rips(ax, rips, alpha=1/(1+EPSILON), zorder=1) # , alpha=1/MULT)
-    #         ax.scatter(P[:,0], P[:,1], s=9, color='black', alpha=0.7, zorder=1)
-    #         balls_plt = plot_balls(ax, P, np.ones(len(P))*EPSILON/2, color=COLOR['red'], zorder=0, alpha=0.1)
-    #
-    #         DIR = "figures"
-    #         NAME = "balls"
-    #         dout = os.path.join(DIR, f"circle_{NAME}{SEED}w{int(10*WEIGHT)}")
-    #         if not os.path.exists(dout):
-    #             os.makedirs(dout)
-    #
-    #         fout = os.path.join(dout, f"{NAME}{SEED}-{RESOLUTION}w{int(10*WEIGHT)}d{int(100*EPSILON)}.png")
-    #         print(f"saving {fout}")
-    #         plt.savefig(fout, dpi=DPI)
-    #
-    #         ax.cla()
-    #         ax.axis('off')
-    #         ax.axis('equal')
-    #         if SCALE is not None:
-    #             ax.set_xlim(-SCALE, SCALE)
-    #             ax.set_ylim(-SCALE, SCALE)
+            ax.cla()
+            reset_plot(ax, args.scale)

@@ -22,7 +22,7 @@ class EmbeddedComplex(Complex):
         pass
 
 class DelaunayComplex(SimplicialComplex, EmbeddedComplex):
-    def __init__(self, P, verbose=False, desc='[ delaunay'):
+    def __init__(self, P, verbose=False, desc='[delaunay'):
         EmbeddedComplex.__init__(self, P)
         for s,f in tqit(diode.fill_alpha_shapes(P, True), verbose, desc):
             s = stuple(s)
@@ -47,7 +47,7 @@ class VoronoiComplex(DualComplex, EmbeddedComplex):
         return all(in_bounds(self.P[v], bounds) for v in s)
 
 class RipsComplex(SimplicialComplex, EmbeddedComplex):
-    def __init__(self, P, thresh, dim=2, verbose=False, desc='[ rips'):
+    def __init__(self, P, thresh, dim=2, verbose=False, desc='[rips'):
         EmbeddedComplex.__init__(self, P)
         for x in tqit(dio.fill_rips(P, dim, thresh), verbose, desc):
             s = stuple(x)

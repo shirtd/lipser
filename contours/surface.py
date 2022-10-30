@@ -73,33 +73,3 @@ class ScalarFieldData(ScalarField, DataFile):
     def __init__(self, file_name, grid=None, constant=None, dir='./'):
         DataFile.__init__(self, file_name, dir)
         ScalarField.__init__(self, self.load(), grid, constant)
-
-
-
-#
-# G = mk_gauss(X, Y, GAUSS_ARGS)
-# _c = args.cmult*3.1443048369350226 #
-#
-#
-# fname = args.file
-# dir = os.path.dirname(fname)
-# file = os.path.basename(fname)
-# label, ext = os.path.splitext(file)
-# lname = label.split('_')
-# name, NPTS, THRESH = lname[0], lname[1], float(lname[2])
-#
-# sample = np.loadtxt(fname)
-# P, F = sample[:,:2], sample[:,2]
-# points = ax.scatter(P[:,0], P[:,1], c='black', zorder=5, s=10)
-#
-#
-# K = rips(P, THRESH)
-# K2 = rips(P, args.mult*THRESH) if args.mult > 1 else K
-#
-#
-# Edist = {e : la.norm(P[e[0]] - P[e[1]]) for e in K2[1]}
-# Emax = {e : (F[e[0]]+F[e[1]] + _c * Edist[e]) / 2 for e in K[1]}
-# # Emax = {e : max(F[e[0]],F[e[1]]) for e in K[1]}
-# Emin = {e : (F[e[0]]+F[e[1]] - _c * Edist[e]) / 2 for e in K2[1]}
-# Tmax = {t : max(Emax[e] for e in combinations(t,2)) for t in K[2]}
-# Tmin = {t : (max if args.comp else min)(Emin[e] for e in combinations(t,2)) for t in K2[2]}

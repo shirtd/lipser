@@ -33,7 +33,7 @@ class Reduction:
         return pairs[low] if low in pairs else None
     def __paired(self, low):
         return low is not None and low in (self.copairs if self.coh else self.pairs)
-    def reduce(self, clearing=False, verbose=False, desc='[ persist'):
+    def reduce(self, clearing=False, verbose=False, desc='[persist'):
         for i in (tqdm(self, total=len(self), desc=desc) if verbose else self):
             if not (clearing and self.__paired(i)):
                 low = self.D[i].get_pivot(self.R)#, self.pivot_map)
