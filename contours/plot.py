@@ -30,9 +30,9 @@ def reset_plot(ax, scale=None, clear=True):
 def init_surface(shape, pad, mult=10):
     fig, ax = get_fig(shape, mult)
     l = np.array(shape) * np.array(pad)
+    ax.axis('scaled')
     ax.set_xlim(-l[0],l[0])
     ax.set_ylim(-l[1],l[1])
-    ax.axis('scaled')
     ax.axis('off')
     plt.tight_layout()
     return fig, ax

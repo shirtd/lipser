@@ -71,8 +71,8 @@ if __name__ == '__main__':
         if args.show:
             plt.show()
     else:
-        if args.show:
-            plt.ion()
+        # if args.show:
+        plt.ion()
         fig, ax = init_surface(CFG['shape'], CFG['pad'], 10)
         sample_plt = plot_points(ax, sample, **kwargs['sample'])
 
