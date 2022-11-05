@@ -1,4 +1,3 @@
-from scipy.spatial import KDTree
 import numpy as np
 import argparse
 import os, sys
@@ -19,13 +18,12 @@ parser.add_argument('--save', action='store_true', help='save plot')
 parser.add_argument('--thresh', type=float, default=None, help='cover radius')
 parser.add_argument('--dpi', type=int, default=300, help='image dpi')
 parser.add_argument('--tag', default='', help='file tag')
-parser.add_argument('--dir', default=os.path.join('figures', 'surf'), help='figure output directory')
+parser.add_argument('--dir', default='figures', help='figure output directory')
 parser.add_argument('--sample', action='store_true', help='sample surface')
 parser.add_argument('--color', action='store_true', help='color plot')
 parser.add_argument('--cover', action='store_true', help='plot cover')
 parser.add_argument('--union', action='store_true', help='plot union of cover')
 parser.add_argument('--contours', action='store_true', help='plot contours')
-
 
 
 if __name__ == '__main__':
@@ -41,6 +39,7 @@ if __name__ == '__main__':
     COLORS = [COLOR[c] for c in CFG['colors']]
     grid = make_grid(CFG['res'], CFG['shape'])
     surf = ScalarFieldData(args.file, grid, CFG['lips'])
+    args.dir = os.path.join(args.dir, surf.name, 'surf')
 
     if args.save and not os.path.exists(args.dir):
         print(f'creating directory {args.dir}')
@@ -65,7 +64,7 @@ if __name__ == '__main__':
         P = get_sample(fig, ax, surf.get_data(), args.thresh, _P)
         thresh_s = np.format_float_scientific(args.thresh, trim='-')
         name = '%s-sample' % surf.name
-        fname = os.path.join(args.data_dir, '%s-%d-%s.csv' % (name, len(P), thresh_s))
+        fname = os.path.join(args.data_dir, '%s-%d_%s.csv' % (name, len(P), thresh_s))
         if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
             print('saving %s' % fname)
             np.savetxt(fname, P)

@@ -1,3 +1,4 @@
+from scipy.spatial import KDTree
 import matplotlib.pyplot as plt
 import numpy.linalg as la
 import numpy as np
@@ -65,8 +66,13 @@ def get_color(f, cuts, colors, default=None):
             return c
     return default
 
-def plot_surface(ax, surf, cuts, colors, zorder=0, xlim=(-3,3), ylim=(-2,2), init=False, contour_color=None, alpha=0.5):
-    contour_kw = {'colors' : [colors[0]]+ colors} if contour_color is None else {'color' : contour_color}
+def plot_surface(ax, surf, cuts, colors, zorder=0, xlim=(-3,3), ylim=(-2,2), init=False, contour_color=None, alpha=0.5, invert=False):
+    if invert:
+        contour_kw = {'colors' : [colors[0]]+ colors} if contour_color is None else {'color' : contour_color}
+    else:
+        contour_kw = {'colors' : colors + [colors[-1]]}
+        if contour_color is not None:
+            contour_kw = {'color' : contour_color}
     res = {'surface' : ax.contourf(*surf.grid, surf.surface, levels=cuts, colors=colors, zorder=zorder, alpha=alpha),
             'contours' : ax.contour(*surf.grid, surf.surface, levels=cuts, zorder=zorder, **contour_kw)}
     if init:
@@ -186,11 +192,15 @@ def plot_sfa(ax, sample, levels, kw, name, dir='figures', save=True, wait=0.5, d
 
 
 def get_sample(fig, ax, S, thresh, P=None, color=COLOR['pink1']):
-    P = [] if P is None else list(P)
+    if P is not None:
+        plot_balls(ax, P, np.ones(len(P))*thresh/2, alpha=1, color='gray', zorder=2)
+        P = list(P)
+    else:
+        P = []
     T = KDTree(S[:,:2])
     def onclick(event):
         p = S[T.query(np.array([event.xdata,event.ydata]))[1]]
-        ax.add_patch(plt.Circle(p, thresh/2, color=color, zorder=3))
+        ax.add_patch(plt.Circle(p, thresh/2, color=color, zorder=3, alpha=0.5))
         ax.scatter(p[0], p[1], c='black', zorder=4, s=10)
         plt.pause(0.1)
         P.append(p)

@@ -11,15 +11,15 @@ from contours.plot import *
 
 parser = argparse.ArgumentParser(prog='lips')
 
-parser.add_argument('--surf', default='data/surf32.csv', help='surface file')
-parser.add_argument('--file', default='data/surf-sample_1067_1.3e-1.csv', help='sample file')
+parser.add_argument('--file', default='data/surf32.csv', help='surface file')
+parser.add_argument('--sample-file', default='data/surf-sample_1067_1.3e-1.csv', help='sample file')
 parser.add_argument('--mult', type=float, default=1., help='thresh mult')
 parser.add_argument('--show', action='store_true', help='show plot')
 parser.add_argument('--wait', type=float, default=0.5, help='wait')
 parser.add_argument('--save', action='store_true', help='save')
 parser.add_argument('--dpi', type=int, default=300, help='dpi')
 parser.add_argument('--tag', default='', help='file tag')
-parser.add_argument('--dir', default=os.path.join('figures', 'rips'), help='dir')
+parser.add_argument('--dir', default='figures', help='dir')
 parser.add_argument('--rips', action='store_true', help='run rips')
 parser.add_argument('--union', action='store_true', help='run offset union')
 parser.add_argument('--barcode', action='store_true', help='run barcode')
@@ -29,8 +29,12 @@ parser.add_argument('--color', action='store_true', help='color complex by funct
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    CFG = CONFIG['rainier' if 'rainier' in  args.file else 'surf']
+    CFG = CONFIG['rainier' if 'rainier' in  args.sample_file else 'surf']
     COLORS = [COLOR[c] for c in CFG['colors']]
+    grid = make_grid(CFG['res'], CFG['shape'])
+    surf = ScalarFieldData(args.file, grid, CFG['lips'])
+    args.dir = os.path.join(args.dir, surf.name, 'rips')
+
     kwargs = {  'filt'      : { 'dir' : args.dir, 'save' : args.save, 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
                 'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 9, 'color' : 'black'},
                 'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red']}}, # 'fade' : [1, 0.5, 0.3]}},
@@ -39,7 +43,7 @@ if __name__ == '__main__':
                                 'alpha' : 1 if args.union else 0.1},
                 'barcode'   : { 'cuts' : CFG['cuts'], 'colors' : [COLOR[c] for c in CFG['colors']]}}
 
-    sample = SampleData(args.file)
+    sample = SampleData(args.sample_file)
     levels = sample.get_levels(CFG['cuts'])
 
     union_str = '-union' if args.union else ''
@@ -48,7 +52,7 @@ if __name__ == '__main__':
     if args.barcode:
         fig, ax = init_barcode()
         grid = make_grid(CFG['res'], CFG['shape'])
-        surf = ScalarFieldData(args.surf, grid)
+        surf = ScalarFieldData(args.file, grid)
 
         rips = RipsComplex(sample.points, sample.radius * args.mult)
         rips.sublevels(sample)

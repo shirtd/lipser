@@ -11,9 +11,10 @@ from contours.plot import *
 
 parser = argparse.ArgumentParser(prog='lips')
 
-parser.add_argument('--surf', default='data/surf32.csv', help='surface file')
-parser.add_argument('--file', default='data/surf-sample_1067_1.3e-1.csv', help='sample file')
-parser.add_argument('--sub-file', default='data/surf-sample_329_2e-1.csv', help='subsample file')
+parser.add_argument('--file', default='data/surf32.csv', help='surface file')
+parser.add_argument('--sample-file', default='data/surf-sample_1067_1.3e-1.csv', help='sample file')
+parser.add_argument('--sub-file', default=None, help='subsample file')
+# parser.add_argument('--sub-file', default='data/surf-sample_329_2e-1.csv', help='subsample file')
 # parser.add_argument('--sub-file', default='data/surf32-partial-sample-510_1.3e-01.csv', help='subsample file')
 # parser.add_argument('--sub-file', default='data/surf32-partial-sample-393_1.3e-01.csv', help='subsample file')
 parser.add_argument('--mult', type=float, default=1., help='radius multiplier')
@@ -24,7 +25,7 @@ parser.add_argument('--wait', type=float, default=0.5, help='wait time (if --sho
 parser.add_argument('--save', action='store_true', help='save plot')
 parser.add_argument('--dpi', type=int, default=300, help='image dpi')
 parser.add_argument('--tag', default='', help='file tag')
-parser.add_argument('--dir', default=os.path.join('figures', 'lips'), help='output directory')
+parser.add_argument('--dir', default='figures', help='output directory')
 parser.add_argument('--rips', action='store_true', help='run rips')
 parser.add_argument('--union', action='store_true', help='run offset union')
 parser.add_argument('--sub', action='store_true', help='run subsample rips')
@@ -36,22 +37,22 @@ parser.add_argument('--color', action='store_true', help='color complex by funct
 parser.add_argument('--partial', action='store_true', help='save partial sample')
 
 
-
 if __name__ == '__main__':
     args = parser.parse_args()
 
     plt.ion()
-    # args.sub = True
-    # args.union = True
-    # args.cover = True
 
-    CFG = CONFIG['rainier' if 'rainier' in  args.file else 'surf2']
+    CFG = CONFIG['rainier' if 'rainier' in  args.sample_file else 'surf2']
     COLORS = [COLOR[c] for c in CFG['colors']]
+    grid = make_grid(CFG['res'], CFG['shape'])
+    surf = ScalarFieldData(args.file, grid, CFG['lips'])
+    args.dir = os.path.join(args.dir, surf.name, 'lips')
+
     kwargs = {  'filt'      : { 'dir' : args.dir, 'save' : args.save, 'wait' : args.wait if args.show else None,
                                 'dpi' : args.dpi, 'hide'  : { 'min' : args.nomin, 'max' : args.nomax}},
-                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 5 if args.sub else 9,
+                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 20 if args.sub else 9,
                                 'facecolors' : 'none' if args.sub else 'black'},
-                'subsample' : { 'c' : 'black', 's' : 10, 'zorder' : 5},
+                'subsample' : { 'c' : 'black', 's' : 9, 'zorder' : 5},
                 'rips'      : { 'max'   : { 'visible' : False, 'zorder' : 2, 'color' : COLOR['blue']},
                                 'min'   : { 'visible' : not (args.sub or args.nomin), 'zorder' : 1, 'color' : COLOR['red']}},
                 'offset'    : { 'max'   : { 'visible' : not args.nomax, 'zorder' : 2, 'alpha' : 1 if args.union else 0.1,
@@ -63,7 +64,7 @@ if __name__ == '__main__':
                                 'alpha' : 1 if args.union else 0.5},
                 'barcode'   : { 'cuts' : CFG['cuts'], 'colors' : [COLOR[c] for c in CFG['colors']]}}
 
-    sample = SampleData(args.file)
+    sample = SampleData(args.sample_file)
     levels = sample.get_levels(CFG['cuts'])
 
     if args.partial:
@@ -96,7 +97,7 @@ if __name__ == '__main__':
     if args.barcode:
         fig, ax = init_barcode()
         grid = make_grid(CFG['res'], CFG['shape'])
-        surf = ScalarFieldData(args.surf, grid)
+        surf = ScalarFieldData(args.file, grid)
 
         rips = RipsComplex(sample.points, sample.radius * args.mult)
         rips.lips_sub(subsample, CFG['lips'])
@@ -134,23 +135,22 @@ if __name__ == '__main__':
             else:
                 rips.lips(sample, CFG['lips'])
             rips_plt = plot_rips_filtration(ax, rips, levels, kwargs['rips'], name, **kwargs['filt'])
-        elif args.cover:
-            name = f'{name}_cover'
-            if args.sub:
-                if not args.nosub:
-                    subsample_plt = plot_points(ax, subsample, **kwargs['subsample'])
-                if args.color:
-                    del kwargs['cover']['color']
-                    colors = [COLOR[c] for c in CFG['colors']]
-                    kwargs['cover']['colors'] = [get_color(f, CFG['cuts'], colors) for f in subsample.function]
-                cover_plt = plot_balls(ax, subsample, np.ones(len(subsample)) * sample.radius / 2 * args.mult, **kwargs['cover'])
-            else:
-                cover_plt = plot_balls(ax, sample, np.ones(len(sample)) * sample.radius / 2 * args.mult, **kwargs['cover'])
-            if args.save:
-                # t_str = np.format_float_scientific(t, trim='-')
-                fname = os.path.join(args.dir, f'{name}.png')
-                print(f'saving {fname}')
-                plt.savefig(fname, dpi=args.dpi, transparent=True)
+        # elif args.cover:
+        #     name = f'{name}_cover'
+        #     if args.sub:
+        #         if not args.nosub:
+        #             subsample_plt = plot_points(ax, subsample, **kwargs['subsample'])
+        #         if args.color:
+        #             del kwargs['cover']['color']
+        #             colors = [COLOR[c] for c in CFG['colors']]
+        #             kwargs['cover']['colors'] = [get_color(f, CFG['cuts'], colors) for f in subsample.function]
+        #         cover_plt = plot_balls(ax, subsample, np.ones(len(subsample)) * sample.radius / 2 * args.mult, **kwargs['cover'])
+        #     else:
+        #         cover_plt = plot_balls(ax, sample, np.ones(len(sample)) * sample.radius / 2 * args.mult, **kwargs['cover'])
+        #     if args.save:
+        #         fname = os.path.join(args.dir, f'{name}.png')
+        #         print(f'saving {fname}')
+        #         plt.savefig(fname, dpi=args.dpi, transparent=True)
 
         else:
             name = f'{name}_offset'

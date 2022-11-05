@@ -25,8 +25,13 @@ class Surface:
         self.grid_points = np.vstack(lmap(lambda x: x.flatten(), self.grid)).T
     def get_data(self):
         return np.vstack([self.grid_points.T, self.surface.flatten()]).T
-    def plot(self, ax, cuts, colors, zorder=0, alpha=0.5, contour_color=None):
-        contour_kw = {'colors' : [colors[0]]+ colors} if contour_color is None else {'color' : contour_color}
+    def plot(self, ax, cuts, colors, zorder=0, alpha=0.5, contour_color=None, invert=False):
+        if invert:
+            contour_kw = {'colors' : [colors[0]]+ colors} if contour_color is None else {'color' : contour_color}
+        else:
+            contour_kw = {'colors' : colors + [colors[-1]]}
+            if contour_color is not None:
+                contour_kw = {'color' : contour_color}
         return {'surface' : ax.contourf(*self.grid, self.surface, levels=cuts, colors=colors, zorder=zorder, alpha=alpha),
                 'contours' : ax.contour(*self.grid, self.surface, levels=cuts, zorder=zorder, **contour_kw)}
     def plot_contours(self, ax, cuts, colors, save=False, dir='figures', dpi=300):
@@ -36,14 +41,16 @@ class Surface:
         surf_plt['surface'].set_alpha(surf_alpha)
         surf_plt['contours'].set_alpha(cont_alpha)
         for i, t in enumerate(cuts[:-1]):
-            plt.pause(0.5)
             if save:
                 fname = os.path.join(dir, f'{self.name}_{int(t*100)}.png')
                 print(f'saving {fname}')
                 plt.savefig(fname, dpi=dpi, transparent=True)
+            else:
+                plt.pause(0.5)
             surf_alpha[i], cont_alpha[i+1] =  0.5, 1
             surf_plt['surface'].set_alpha(surf_alpha)
             surf_plt['contours'].set_alpha(cont_alpha)
+
         return surf_plt
 
 class Sample:
