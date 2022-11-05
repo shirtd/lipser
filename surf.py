@@ -1,85 +1,84 @@
-import matplotlib.pyplot as plt
+from scipy.spatial import KDTree
 import numpy as np
-import os
+import argparse
+import os, sys
 
-from contours.surface import make_grid
-from lips.util.math import mk_gauss
+from contours import CONFIG, COLOR
 from contours.surface import *
 from contours.plot import *
 
-from contours.style import COLOR
-from contours.config import CONFIG
 
-plt.ion()
+parser = argparse.ArgumentParser(prog='lips')
 
-SAVE = True
-DIR = 'data'
-OUT = os.path.join('figures','surf')
-NAME = 'surf'
-EXT = 'csv'
-
-RES = 32
-SHAPE = (2,1)
-GAUSS_ARGS = [  (1,     [-0.2, 0.2],    [0.3, 0.3]),
-                (0.5,   [-1.3, -0.1],   [0.15, 0.15]),
-                (0.7,   [-0.8, -0.4],   [0.2, 0.2]),
-                (0.8,   [-0.8, -0],     [0.4, 0.4]),
-                (0.4,   [0.6, 0.0],     [0.4, 0.2]),
-                (0.7,   [1.25, 0.3],    [0.25, 0.25])]
-
-# GAUSS_ARGS = [  (1,     [-0.2, 0.2],    [0.3, 0.3]),
-#                 (0.5,   [-1.3, -0.1],   [0.15, 0.15]),
-#                 (0.7,   [-0.8, -0.4],   [0.2, 0.2]),
-#                 (0.6,   [-0.8, -0],     [0.4, 0.4]),
-#                 (0.4,   [0.6, 0.0],     [0.4, 0.2]),
-#                 (0.8,   [1.25, 0.3],    [0.25, 0.25])]
+parser.add_argument('--file', default=os.path.join('data', 'surf32.csv'), help='surface file')
+parser.add_argument('--sample-file', default=None, help='sample file')
+parser.add_argument('--data-dir', default='data', help='data directory')
+parser.add_argument('--nosurf', action='store_true', help='hide surf')
+parser.add_argument('--show', action='store_true', help='show plot')
+parser.add_argument('--save', action='store_true', help='save plot')
+parser.add_argument('--thresh', type=float, default=None, help='cover radius')
+parser.add_argument('--dpi', type=int, default=300, help='image dpi')
+parser.add_argument('--tag', default='', help='file tag')
+parser.add_argument('--dir', default=os.path.join('figures', 'surf'), help='figure output directory')
+parser.add_argument('--sample', action='store_true', help='sample surface')
+parser.add_argument('--color', action='store_true', help='color plot')
+parser.add_argument('--cover', action='store_true', help='plot cover')
+parser.add_argument('--union', action='store_true', help='plot union of cover')
+parser.add_argument('--contours', action='store_true', help='plot contours')
 
 
-EPSILON = 0.20
 
 if __name__ == '__main__':
-    grid = make_grid(RES, SHAPE)
-    surface = mk_gauss(grid[0], grid[1], GAUSS_ARGS)
+    args = parser.parse_args()
 
-    if SAVE:
-        if not os.path.exists('data'):
-            os.makedirs('data')
-        np.savetxt(os.path.join(DIR, '%s%d.%s' % (NAME,RES,EXT)), surface)
+    kwargs = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
+                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 9, 'color' : 'black'},
+                'cover'    : { 'visible' : True, 'zorder' : 2,
+                                'color' : COLOR['red1'] if args.union else COLOR['red'],
+                                'alpha' : 1 if args.union else 0.2}}
 
-    CFG = CONFIG['surf']
-    # CFG['cuts'] = [0.0, 0.3, 0.55, 0.8, 1.35]
-    # CFG['cuts'] = [0.0, 0.3 - EPSILON, 0.55 - EPSILON, 0.8 - EPSILON, 1.35 - EPSILON]
-    # CFG['cuts'] = [0.0, 0.3 + EPSILON, 0.55 + EPSILON, 0.8 + EPSILON, 1.35 + EPSILON]
-    COLORS = [COLOR[k] for k in CFG['colors']]
-    fig, ax = init_surface(CFG['shape'], CFG['pad'])
+    CFG = CONFIG['rainier' if 'rainier' in  args.file else 'surf']
+    COLORS = [COLOR[c] for c in CFG['colors']]
+    grid = make_grid(CFG['res'], CFG['shape'])
+    surf = ScalarFieldData(args.file, grid, CFG['lips'])
 
-    surf = ScalarField(surface, grid)
-    COLORS = [COLOR[k] for k in CFG['colors']]
-    # surf_plt = plot_surface(ax, surf, [0.0,  0.05], [[1,1,1,1], [0,0,0,0]])
-    # surf_plt = plot_surface(ax, surf, [0.0, 0.8], [COLOR['purple']+(0.5,), COLOR['yellow']+(0,)])
-    surf_plt = plot_surface(ax, surf, CFG['cuts'], COLORS)
+    if args.save and not os.path.exists(args.dir):
+        print(f'creating directory {args.dir}')
+        os.makedirs(args.dir)
 
-    name = os.path.join(OUT, f'{NAME}{RES}')
-    fname = f'{name}.png'
-    print(f'saving {fname}')
-    plt.savefig(fname, dpi=300, transparent=True)
-    #
-    #
-    surf_alpha = [0.5, 0.5, 0.5, 0.5]
-    cont_alpha = [0, 0, 0, 0, 0]
-    surf_plt['surface'].set_alpha(surf_alpha)
-    surf_plt['contours'].set_alpha(cont_alpha)
-    plt.savefig(f'{name}.png', dpi=300, transparent=True)
-    # # cont_alpha[0] = 1
-    # for i in range(len(CFG['cuts'])-1):
-    #     surf_alpha[i], cont_alpha[i+1] = 0.5, 1.
-    #     surf_plt['surface'].set_alpha(surf_alpha)
-    #     surf_plt['contours'].set_alpha(cont_alpha)
-    #     fname = f'{name}-{i}.png'
-    #     print(f'saving {fname}')
-    #     plt.savefig(fname, dpi=300, transparent=True)
-    #     cont_alpha[i+1] = 0
+    fig, ax = init_surface(CFG['shape'], CFG['pad'], 10)
+    if args.contours:
+        surf_plt = surf.plot_contours(ax, CFG['cuts'], COLORS, args.save, args.dir, args.dpi)
+    elif not args.nosurf:
+        surf_plt = surf.plot(ax, CFG['cuts'], COLORS, **kwargs['surf'])
 
-    # _grid = make_grid(CFG['res'], CFG['shape'])
-    # _surf = ScalarFieldData('data/surf32.csv', _grid, CFG['lips'])
-    # _surf_plt = plot_surface(ax, _surf, CFG['cuts'], COLORS, alpha=0., contour_color='black')
+    if args.sample_file is not None:
+        sample =  SampleData(args.sample_file, args.thresh)
+        if args.thresh is None:
+            args.thresh = sample.radius
+        sample_plt = sample.plot(ax, **kwargs['sample'])
+        if args.cover or args.union:
+            cover_plt = sample.plot_cover(ax, **kwargs['cover'])
+
+    if args.sample and args.thresh is not None:
+        _P = np.vstack([sample.points.T, sample.function]).T if args.sample_file is not None else None
+        P = get_sample(fig, ax, surf.get_data(), args.thresh, _P)
+        thresh_s = np.format_float_scientific(args.thresh, trim='-')
+        name = '%s-sample' % surf.name
+        fname = os.path.join(args.data_dir, '%s-%d-%s.csv' % (name, len(P), thresh_s))
+        if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
+            print('saving %s' % fname)
+            np.savetxt(fname, P)
+    elif args.show:
+        plt.show()
+
+    if args.save:
+        sample_str = ''
+        if args.sample_file is not None:
+            cover_str = '-cover' if args.cover else '-union' if args.union else ''
+            color_str = '-color' if args.color else ''
+            surf_str = '-nosurf' if args.nosurf else ''
+            sample_str = f'_{sample.name}{cover_str}{color_str}{surf_str}'
+        fname = os.path.join(args.dir, f'{surf.name}{sample_str}.png')
+        print(f'saving {fname}')
+        plt.savefig(fname, dpi=args.dpi, transparent=True)
