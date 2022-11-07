@@ -6,6 +6,8 @@ from contours import CONFIG, COLOR
 from contours.surface import *
 from contours.plot import *
 
+from lips.geometry.util import lipschitz_grid
+
 
 parser = argparse.ArgumentParser(prog='lips')
 
@@ -40,6 +42,9 @@ if __name__ == '__main__':
     grid = make_grid(CFG['res'], CFG['shape'])
     surf = ScalarFieldData(args.file, grid, CFG['lips'])
     args.dir = os.path.join(args.dir, surf.name, 'surf')
+
+    # print(lipschitz_grid(surf.surface, surf.grid[0], surf.grid[1]))
+    # print(CFG['lips'])
 
     if args.save and not os.path.exists(args.dir):
         print(f'creating directory {args.dir}')

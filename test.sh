@@ -7,7 +7,6 @@
 # - subsample rainier
 
 
-
 SURF='data/rainier_sub16.csv'
 SAMPLE='data/rainier_sub16-sample-2318_7.5e-02.csv'
 

@@ -74,8 +74,8 @@ class RipsComplex(SimplicialComplex, EmbeddedComplex):
             s.data['min'] = min(self[e].data['min'] for e in combinations(s,2))
     def lips_sub(self, subsample, constant):
         for p, s in zip(self.P, self(0)):
-            s.data['max'] = min(f + constant*la.norm(p - s) for s, f in zip(subsample, subsample.function))
-            s.data['min'] = max(f - constant*la.norm(p - s) for s, f in zip(subsample, subsample.function))
+            s.data['max'] = min(f + constant*la.norm(p - q) for q, f in zip(subsample, subsample.function))
+            s.data['min'] = max(f - constant*la.norm(p - q) for q, f in zip(subsample, subsample.function))
         for s in self(1)+self(2):
             s.data['max'] = max(self(0)[v].data['max'] for v in s)
             s.data['min'] = max(self(0)[v].data['min'] for v in s)

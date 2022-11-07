@@ -22,6 +22,14 @@ def get_delta(n, w=1, h=1):
 def lipschitz(F, P):
     return max(abs(fp - fq) / la.norm(p - q) for (fp,p), (fq,q) in tqdm(list(combinations(zip(F,P), 2))))
 
+def lipschitz_grid(G, X, Y):
+    def _lips(i,j):
+        p, f = np.array([X[i,j], Y[i,j]]), G[i,j]
+        its = [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(1,-1),(-1,1),(1,1)]
+        return max(abs(f - G[i+a,j+b]) / la.norm(p - np.array([X[i+a,j+b], Y[i+a,j+b]])) for a,b in its)
+    return max(_lips(i,j) for j in range(1, G.shape[1]-1) for i in range(1, G.shape[0]-1))
+
+
 def ripple_lips(a=0, b=1, n=1024, f=1, l=1, d=1, w=1, s=1):
     t = np.linspace(a, b, n)
     f = ripple(t, f, l, d, w, s)

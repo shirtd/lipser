@@ -135,23 +135,6 @@ if __name__ == '__main__':
             else:
                 rips.lips(sample, CFG['lips'])
             rips_plt = plot_rips_filtration(ax, rips, levels, kwargs['rips'], name, **kwargs['filt'])
-        # elif args.cover:
-        #     name = f'{name}_cover'
-        #     if args.sub:
-        #         if not args.nosub:
-        #             subsample_plt = plot_points(ax, subsample, **kwargs['subsample'])
-        #         if args.color:
-        #             del kwargs['cover']['color']
-        #             colors = [COLOR[c] for c in CFG['colors']]
-        #             kwargs['cover']['colors'] = [get_color(f, CFG['cuts'], colors) for f in subsample.function]
-        #         cover_plt = plot_balls(ax, subsample, np.ones(len(subsample)) * sample.radius / 2 * args.mult, **kwargs['cover'])
-        #     else:
-        #         cover_plt = plot_balls(ax, sample, np.ones(len(sample)) * sample.radius / 2 * args.mult, **kwargs['cover'])
-        #     if args.save:
-        #         fname = os.path.join(args.dir, f'{name}.png')
-        #         print(f'saving {fname}')
-        #         plt.savefig(fname, dpi=args.dpi, transparent=True)
-
         else:
             name = f'{name}_offset'
             if args.sub:
