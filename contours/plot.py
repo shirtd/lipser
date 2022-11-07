@@ -9,10 +9,10 @@ from contours import COLOR
 
 
 def init_barcode(figsize=(6,4)):
-    fig, ax = plt.subplots(2,1,sharex=True, sharey=True,figsize=figsize)
-    ax[0].invert_yaxis()
+    fig, ax = plt.subplots(2,1,sharex=True, figsize=figsize)
+    # ax[0].invert_yaxis()
     ax[1].set_xticks([])
-    ax[1].set_ylim(5,-1)
+    # ax[1].set_ylim(5,-1)
     plt.tight_layout()
     return fig, ax
 
@@ -209,3 +209,19 @@ def get_sample(fig, ax, S, thresh, P=None, color=COLOR['pink1']):
     fig.canvas.mpl_disconnect(cid)
     P = sorted(P, key=lambda x: x[1])
     return np.vstack(P)
+
+def get_subsample(fig, ax, S, thresh, P, color=COLOR['pink1']):
+    cover_plt = plot_balls(ax, P, np.ones(len(P))*thresh/2, alpha=0.5, color='gray', zorder=2)
+    T = KDTree(P[:,:2])
+    Q = []
+    def onclick(event):
+        idx = T.query(np.array([event.xdata,event.ydata]))[1]
+        cover_plt[idx].set_color(color)
+        cover_plt[idx].set_alpha(1)
+        cover_plt[idx].set_zorder(6)
+        plt.pause(0.1)
+        Q.append(int(idx))
+    cid = fig.canvas.mpl_connect('button_press_event', onclick)
+    plt.show()
+    fig.canvas.mpl_disconnect(cid)
+    return sorted(Q)

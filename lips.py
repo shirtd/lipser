@@ -8,6 +8,8 @@ from contours import CONFIG, COLOR
 from contours.surface import *
 from contours.plot import *
 
+from lips.geometry.util import lipschitz_grid
+
 
 parser = argparse.ArgumentParser(prog='lips')
 
@@ -64,6 +66,10 @@ if __name__ == '__main__':
                                 'alpha' : 1 if args.union else 0.5},
                 'barcode'   : { 'cuts' : CFG['cuts'], 'colors' : [COLOR[c] for c in CFG['colors']]}}
 
+
+    # CFG['lips'] = lipschitz_grid(surf.surface, surf.grid[0], surf.grid[1])
+    # print(CFG['lips'])
+
     sample = SampleData(args.sample_file)
     levels = sample.get_levels(CFG['cuts'])
 
@@ -79,7 +85,7 @@ if __name__ == '__main__':
         args.sub = fname
 
     if args.sub or args.barcode:
-        subsample = SampleData(args.sub_file)
+        subsample = SubsampleData(args.sample_file, args.sub_file)
 
     sub_str = f'sub-{subsample.name}' if args.sub else ''
     union_str = '-union' if args.union else ''
@@ -107,8 +113,8 @@ if __name__ == '__main__':
         sample_dgms, _ = hom.get_diagram(rips, min_filt, max_filt)
         surf_dgms = sfa_dio(surf.surface)
 
-        plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'])
-        plot_barcode(ax[1], surf_dgms[1], **kwargs['barcode'])
+        plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'], lw=CFG['lw'])
+        plot_barcode(ax[1], surf_dgms[1], **kwargs['barcode'], lw=CFG['lw'])
 
         if args.save:
             if not os.path.exists(args.dir):
@@ -135,6 +141,23 @@ if __name__ == '__main__':
             else:
                 rips.lips(sample, CFG['lips'])
             rips_plt = plot_rips_filtration(ax, rips, levels, kwargs['rips'], name, **kwargs['filt'])
+        elif args.cover:
+            name = f'{name}_cover'
+            if args.sub:
+                if not args.nosub:
+                    subsample_plt = plot_points(ax, subsample, **kwargs['subsample'])
+                if args.color:
+                    del kwargs['cover']['color']
+                    colors = [COLOR[c] for c in CFG['colors']]
+                    kwargs['cover']['colors'] = [get_color(f, CFG['cuts'], colors) for f in subsample.function]
+                cover_plt = plot_balls(ax, subsample, np.ones(len(subsample)) * sample.radius / 2 * args.mult, **kwargs['cover'])
+            else:
+                cover_plt = plot_balls(ax, sample, np.ones(len(sample)) * sample.radius / 2 * args.mult, **kwargs['cover'])
+            if args.save:
+                # t_str = np.format_float_scientific(t, trim='-')
+                fname = os.path.join(args.dir, f'{name}.png')
+                print(f'saving {fname}')
+                plt.savefig(fname, dpi=args.dpi, transparent=True)
         else:
             name = f'{name}_offset'
             if args.sub:

@@ -22,6 +22,7 @@ parser.add_argument('--dpi', type=int, default=300, help='image dpi')
 parser.add_argument('--tag', default='', help='file tag')
 parser.add_argument('--dir', default='figures', help='figure output directory')
 parser.add_argument('--sample', action='store_true', help='sample surface')
+parser.add_argument('--subsample', action='store_true', help='subsample surface')
 parser.add_argument('--color', action='store_true', help='color plot')
 parser.add_argument('--cover', action='store_true', help='plot cover')
 parser.add_argument('--union', action='store_true', help='plot union of cover')
@@ -64,15 +65,22 @@ if __name__ == '__main__':
         if args.cover or args.union:
             cover_plt = sample.plot_cover(ax, **kwargs['cover'])
 
-    if args.sample and args.thresh is not None:
+    if args.subsample or args.sample:
         _P = np.vstack([sample.points.T, sample.function]).T if args.sample_file is not None else None
-        P = get_sample(fig, ax, surf.get_data(), args.thresh, _P)
-        thresh_s = np.format_float_scientific(args.thresh, trim='-')
-        name = '%s-sample' % surf.name
-        fname = os.path.join(args.data_dir, '%s-%d_%s.csv' % (name, len(P), thresh_s))
-        if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
-            print('saving %s' % fname)
-            np.savetxt(fname, P)
+        if args.subsample:
+            P = get_subsample(fig, ax, surf.get_data(), args.thresh, _P)
+            fname = os.path.join(args.data_dir, f'{sample.name}-subsample_{len(P)}.csv')
+            if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
+                print('saving %s' % fname)
+                np.savetxt(fname, P, fmt='%d')
+        else:
+            P = get_sample(fig, ax, surf.get_data(), args.thresh, _P)
+            name = '%s-sample' % surf.name
+            thresh_s = np.format_float_scientific(args.thresh, trim='-')
+            fname = os.path.join(args.data_dir, '%s-%d_%s.csv' % (name, len(P), thresh_s))
+            if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
+                print('saving %s' % fname)
+                np.savetxt(fname, P)
     elif args.show:
         plt.show()
 

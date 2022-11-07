@@ -7,14 +7,15 @@
 # - subsample rainier
 
 
-SURF='data/rainier_sub16.csv'
-SAMPLE='data/rainier_sub16-sample-2318_7.5e-02.csv'
+# SURF='data/rainier_sub16.csv'
+# SAMPLE='data/rainier_sub16-sample-2466_7.5e-02.csv'
+# SUB='data/rainier_sub16-sample-2466_7.5e-02-subsample_488.csv'
+# PARTIAL='data/rainier_sub16-sample-514_7.5e-02.csv'
 
-# SURF='data/surf32.csv'
-# SAMPLE='data/surf-sample_1067_1.3e-1.csv'
-# SUB='data/surf-sample_329_2e-1.csv'
-# PARTIAL='data/surf32-partial-sample-393_1.3e-01.csv'
-
+SURF='data/surf32.csv'
+SAMPLE='data/surf-sample_1067_1.3e-1.csv'
+SUB='data/surf-sample_329_2e-1.csv'
+PARTIAL='data/surf32-partial-sample-393_1.3e-01.csv'
 
 
 python surf.py --save --file $SURF --contours
@@ -77,30 +78,30 @@ python lips.py --save --file $SURF --sample-file $SAMPLE --nomin --rips
 
 if [ -n "$SUB" ]; then
 
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomax
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomin
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --union
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomax --union
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomin --union
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --rips
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomax --rips
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomin --rips
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomax
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomin
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --union
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomax --union
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomin --union
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --rips
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomax --rips
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --nomin --rips
 
-  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --sub
-  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --sub --nomin
-  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --sub --nomax
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --rips --sub
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --rips --sub --nomin
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --rips --sub --nomax
   python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --barcode
 
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --union
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --color
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosub
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosub --union
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosub --color
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosample
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosample --union
-  # python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosample --color
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --union
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --color
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosub
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosub --union
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosub --color
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosample
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosample --union
+  python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $SUB --cover --nosample --color
 
   if [ -n "$PARTIAL" ]; then
     python lips.py --save --file $SURF --sample-file $SAMPLE --sub-file $PARTIAL --cover

@@ -93,6 +93,14 @@ class SampleData(Sample, DataFile):
             ax.add_patch(s)
         return balls
 
+class SubsampleData(Sample, DataFile):
+    def __init__(self, file_name, subsample_file, radius=None):
+        DataFile.__init__(self, file_name)
+        data = self.load()
+        idx = list(np.loadtxt(subsample_file, dtype=int))
+        Sample.__init__(self, data[idx,:2], data[idx,2])
+        self.radius = float(self.name.split('_')[-1]) if radius is None else radius
+
 class GaussianSurface(Surface):
     def __init__(self, resolution, shape, *args, **kwargs):
         grid = make_grid(resolution, shape)

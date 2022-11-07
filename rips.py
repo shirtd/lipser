@@ -62,8 +62,8 @@ if __name__ == '__main__':
         sample_dgms, _ = hom.get_diagram(rips, filt, filt)
         surf_dgms = sfa_dio(surf.surface)
 
-        plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'])
-        plot_barcode(ax[1], surf_dgms[1], **kwargs['barcode'])
+        plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'], lw=CFG['lw'])
+        plot_barcode(ax[1], surf_dgms[1], **kwargs['barcode'], lw=CFG['lw'])
 
         if args.save:
             if not os.path.exists(args.dir):

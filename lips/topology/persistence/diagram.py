@@ -77,7 +77,8 @@ class Diagram(Reduction):
             b = K[F[i]]
             fmap[i] = [b(pivot.key), np.inf]
             dgms[b.dim].append(fmap[i])
-        dgms = list(map(np.array, dgms))
+        dgms = [np.array(sorted(d,key=lambda p: p[0])) for d in dgms]
+        # dgms = list(map(np.array, dgms))
         return dgms, fmap
     # def element_pair(self, K, F, i):
     #     return [K[F[i]], K[F[self[i]]]]
