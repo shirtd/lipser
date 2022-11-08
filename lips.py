@@ -19,7 +19,7 @@ SAMPLE_FILE='data/surf32-sample-1233_1.25e-01.csv'
 SUB_FILE='data/surf32-sample-1233_1.25e-01-subsample_401.csv'
 
 RHO=2/np.sqrt(3)
-MULT=RHO*2/np.sqrt(3)
+MULT=1. # RHO*2/np.sqrt(3)
 
 parser = argparse.ArgumentParser(prog='lips')
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     # plt.ion()
 
-    CFG = CONFIG['rainier' if 'rainier' in  args.sample_file else 'surf2']
+    CFG = CONFIG[os.path.splitext(os.path.basename(args.file))[0]]
     COLORS = [COLOR[c] for c in CFG['colors']]
     grid = make_grid(CFG['res'], CFG['shape'])
     surf = ScalarFieldData(args.file, grid, CFG['lips'])
@@ -79,7 +79,7 @@ if __name__ == '__main__':
                                             'color' : COLOR['red1'] if args.union else COLOR['red']}},
                 'cover'      : { 'visible' : True, 'zorder' : 1,
                                 'color' : COLOR['red1'] if args.union else COLOR['red'],
-                                'alpha' : 1 if args.union else 0.5},
+                                'alpha' : 1 if args.union else 0.1},
                 'barcode'   : { 'cuts' : CFG['cuts'], 'colors' : [COLOR[c] for c in CFG['colors']]}}
 
 
@@ -131,7 +131,7 @@ if __name__ == '__main__':
         hom = Diagram(rips, min_filt, pivot=max_filt, verbose=True)
 
         smoothing = lambda p: [p[0]+CFG['lips']*sample.radius/4, p[1]-CFG['lips']*sample.radius/4]
-        sample_dgms = hom.get_diagram(rips, min_filt, max_filt, smoothing=smoothing)
+        sample_dgms = hom.get_diagram(rips, min_filt, max_filt)#, smoothing=smoothing)
         surf_dgms = sfa_dio(surf.surface)
 
         plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'], lw=CFG['lw'])

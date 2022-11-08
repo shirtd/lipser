@@ -67,6 +67,12 @@ def get_color(f, cuts, colors, default=None):
             return c
     return default
 
+def get_cut(f, cuts, colors, default=-1):
+    for i, (a,b) in enumerate(zip(cuts[:-1],cuts[1:])):
+        if a <= f < b:
+            return i
+    return default
+
 def plot_surface(ax, surf, cuts, colors, zorder=0, xlim=(-3,3), ylim=(-2,2), init=False, contour_color=None, alpha=0.5, invert=False):
     if invert:
         contour_kw = {'colors' : [colors[0]]+ colors} if contour_color is None else {'color' : contour_color}
@@ -93,11 +99,12 @@ def plot_points(ax, points, visible=True, **kwargs):
     p.set_visible(visible)
     return p
 
-def plot_balls(ax, P, F, alpha=0.2, color=None, colors=None, **kwargs):
+def plot_balls(ax, P, F, alpha=0.2, color=None, colors=None, zorder=None, zorders=None, **kwargs):
     colors = [color for _ in F] if colors is None else colors
+    zorders = [zorder for _ in F] if zorders is None else zorders
     balls = []
-    for p,f,c in zip(P, F, colors):
-        s = plt.Circle(p, f, alpha=alpha, facecolor=c, edgecolor='none', **kwargs)
+    for p,f,c,z in zip(P, F, colors, zorders):
+        s = plt.Circle(p, f, alpha=alpha, facecolor=c, edgecolor='none', zorder=z, **kwargs)
         balls.append(s)
         ax.add_patch(s)
     return balls
@@ -202,7 +209,7 @@ def get_sample(fig, ax, S, thresh, P=None, color=COLOR['pink1']):
     def onclick(event):
         p = S[T.query(np.array([event.xdata,event.ydata]))[1]]
         ax.add_patch(plt.Circle(p, thresh/2, color=color, zorder=3, alpha=0.5))
-        ax.scatter(p[0], p[1], c='black', zorder=4, s=10)
+        ax.scatter(p[0], p[1], c='black', zorder=4, s=5)
         plt.pause(0.1)
         P.append(p)
     cid = fig.canvas.mpl_connect('button_press_event', onclick)

@@ -84,11 +84,12 @@ class SampleData(Sample, DataFile):
         data = self.load()
         Sample.__init__(self, data[:,:2], data[:,2])
         self.radius = float(self.name.split('_')[-1]) if radius is None else radius
-    def plot_cover(self, ax, alpha=0.2, color=None, colors=None, **kwargs):
+    def plot_cover(self, ax, alpha=0.2, color=None, colors=None, zorder=None, zorders=None, **kwargs):
         colors = [color for _ in self] if colors is None else colors
+        zorders = [zorder for _ in F] if zorders is None else zorders
         balls = []
-        for p,c in zip(self.points, colors):
-            s = plt.Circle(p, self.radius / 2, alpha=alpha, facecolor=c, edgecolor='none', **kwargs)
+        for p,c,z in zip(self.points, colors, zorders):
+            s = plt.Circle(p, self.radius / 2, alpha=alpha, facecolor=c, edgecolor='none', zorder=z, **kwargs)
             balls.append(s)
             ax.add_patch(s)
         return balls

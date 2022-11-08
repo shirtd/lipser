@@ -25,21 +25,23 @@ parser.add_argument('--union', action='store_true', help='run offset union')
 parser.add_argument('--barcode', action='store_true', help='run barcode')
 parser.add_argument('--color', action='store_true', help='color complex by function values')
 parser.add_argument('--noim', action='store_true', help='don\'t do image persistence')
+parser.add_argument('--graph', action='store_true', help='just plot graph')
 parser.add_argument('--coef', default=2/np.sqrt(3), type=float, help='rips coef')
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    CFG = CONFIG['rainier' if 'rainier' in  args.sample_file else 'surf']
+    CFG = CONFIG[os.path.splitext(os.path.basename(args.file))[0]]
     COLORS = [COLOR[c] for c in CFG['colors']]
     grid = make_grid(CFG['res'], CFG['shape'])
     surf = ScalarFieldData(args.file, grid, CFG['lips'])
     args.dir = os.path.join(args.dir, surf.name, 'rips')
 
-    kwargs = {  'filt'      : { 'dir' : args.dir, 'save' : args.save, 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
-                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 5, 'color' : 'black'},
-                'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red']}}, # 'fade' : [1, 0.5, 0.3]}},
+    kwargs = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
+                'filt'      : { 'dir' : args.dir, 'save' : args.save, 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
+                'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : 5, 'color' : 'black'},
+                'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.5, 0 if args.graph else 0.15]}},
                 'offset'    : { 'visible' : False, 'zorder' : 2,
                                 'color' : COLOR['red1'] if args.union else COLOR['red'],
                                 'alpha' : 1 if args.union else 0.1},
@@ -84,8 +86,10 @@ if __name__ == '__main__':
         fig, ax = init_surface(CFG['shape'], CFG['pad'], 10)
         sample_plt = plot_points(ax, sample, **kwargs['sample'])
 
-        if args.rips:
-            name = f'{name}_rips'
+        if args.rips or args.graph:
+            name = f'{name}_rips' if args.rips else f'{name}_graph'
+            # if args.graph:
+            #     surf_plt = surf.plot(ax, CFG['cuts'], COLORS, **kwargs['surf'])
             rips = RipsComplex(sample.points, sample.radius * args.mult)
             rips.sublevels(sample)
             if args.color:
@@ -98,4 +102,6 @@ if __name__ == '__main__':
             if args.color:
                 del kwargs['offset']['color']
                 kwargs['offset']['colors'] = [get_color(f, CFG['cuts'], [COLOR[c] for c in CFG['colors']]) for f in sample.function]
+                kwargs['offset']['zorders'] = [get_cut(f, CFG['cuts'], kwargs['offset']['zorder']+1) for f in sample.function]
+                del kwargs['offset']['zorder']
             offset_plt = plot_sfa(ax, sample, levels, kwargs['offset'], name, **kwargs['filt'])
