@@ -7,42 +7,42 @@
 # - subsample rainier
 
 
-# SURF='data/rainier_sub16.csv'
-# SAMPLE='data/rainier_sub16-sample-2466_7.5e-02.csv'
-# SUB='data/rainier_sub16-sample-2466_7.5e-02-subsample_488.csv'
-# PARTIAL='data/rainier_sub16-sample-514_7.5e-02.csv'
+SURF='data/rainier_sub16.csv'
+SAMPLE='data/rainier_sub16-sample-2466_7.5e-02.csv'
+SUB='data/rainier_sub16-sample-2466_7.5e-02-subsample_488.csv'
+PARTIAL='data/rainier_sub16-sample-514_7.5e-02.csv'
 
-SURF='data/surf32.csv'
-SAMPLE='data/surf-sample_1067_1.3e-1.csv'
-SUB='data/surf-sample_329_2e-1.csv'
-PARTIAL='data/surf32-partial-sample-393_1.3e-01.csv'
+# SURF='data/surf32.csv'
+# SAMPLE='data/surf32-sample-1233_1.25e-01.csv'
+# SUB='data/surf32-sample-1233_1.25e-01-subsample_401.csv'
+# PARTIAL='data/surf32-partial-sample-393_1.3e-01.csv'
 
-
-python surf.py --save --file $SURF --contours
-
-python surf.py --save --file $SURF --sample-file $SAMPLE
-python surf.py --save --file $SURF --sample-file $SAMPLE --cover
-python surf.py --save --file $SURF --sample-file $SAMPLE --union
-python surf.py --save --file $SURF --sample-file $SAMPLE --cover --color
-python surf.py --save --file $SURF --sample-file $SAMPLE --union --color
-python surf.py --save --file $SURF --sample-file $SAMPLE --cover --nosurf
-python surf.py --save --file $SURF --sample-file $SAMPLE --union --nosurf
-python surf.py --save --file $SURF --sample-file $SAMPLE --cover --nosurf --color
-python surf.py --save --file $SURF --sample-file $SAMPLE --union --nosurf --color
-
-if [ -n "$PARTIAL" ]; then
-  python surf.py --save --file $SURF --sample-file $PARTIAL
-  python surf.py --save --file $SURF --sample-file $PARTIAL --cover
-  python surf.py --save --file $SURF --sample-file $PARTIAL --union
-  python surf.py --save --file $SURF --sample-file $PARTIAL --nosurf
-  python surf.py --save --file $SURF --sample-file $PARTIAL --cover --nosurf
-  python surf.py --save --file $SURF --sample-file $PARTIAL --union --nosurf
-  python surf.py --save --file $SURF --sample-file $PARTIAL --color
-  python surf.py --save --file $SURF --sample-file $PARTIAL --cover --color
-  python surf.py --save --file $SURF --sample-file $PARTIAL --union --color
-  python surf.py --save --file $SURF --sample-file $PARTIAL --cover --nosurf --color
-  python surf.py --save --file $SURF --sample-file $PARTIAL --union --nosurf --color
-fi
+# 
+# python surf.py --save --file $SURF --contours
+#
+# python surf.py --save --file $SURF --sample-file $SAMPLE
+# python surf.py --save --file $SURF --sample-file $SAMPLE --cover
+# python surf.py --save --file $SURF --sample-file $SAMPLE --union
+# python surf.py --save --file $SURF --sample-file $SAMPLE --cover --color
+# python surf.py --save --file $SURF --sample-file $SAMPLE --union --color
+# python surf.py --save --file $SURF --sample-file $SAMPLE --cover --nosurf
+# python surf.py --save --file $SURF --sample-file $SAMPLE --union --nosurf
+# python surf.py --save --file $SURF --sample-file $SAMPLE --cover --nosurf --color
+# python surf.py --save --file $SURF --sample-file $SAMPLE --union --nosurf --color
+#
+# if [ -n "$PARTIAL" ]; then
+#   python surf.py --save --file $SURF --sample-file $PARTIAL
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --cover
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --union
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --nosurf
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --cover --nosurf
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --union --nosurf
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --color
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --cover --color
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --union --color
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --cover --nosurf --color
+#   python surf.py --save --file $SURF --sample-file $PARTIAL --union --nosurf --color
+# fi
 
 
 python rips.py --save --file $SURF --sample-file $SAMPLE

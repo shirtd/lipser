@@ -12,7 +12,7 @@ from contours.plot import *
 parser = argparse.ArgumentParser(prog='lips')
 
 parser.add_argument('--file', default='data/surf32.csv', help='surface file')
-parser.add_argument('--sample-file', default='data/surf-sample_1067_1.3e-1.csv', help='sample file')
+parser.add_argument('--sample-file', default='data/surf32-sample-1233_1.3e-01.csv', help='sample file')
 parser.add_argument('--mult', type=float, default=1., help='thresh mult')
 parser.add_argument('--show', action='store_true', help='show plot')
 parser.add_argument('--wait', type=float, default=0.5, help='wait')
@@ -24,6 +24,8 @@ parser.add_argument('--rips', action='store_true', help='run rips')
 parser.add_argument('--union', action='store_true', help='run offset union')
 parser.add_argument('--barcode', action='store_true', help='run barcode')
 parser.add_argument('--color', action='store_true', help='color complex by function values')
+parser.add_argument('--noim', action='store_true', help='don\'t do image persistence')
+parser.add_argument('--coef', default=2/np.sqrt(3), type=float, help='rips coef')
 
 
 if __name__ == '__main__':
@@ -36,7 +38,7 @@ if __name__ == '__main__':
     args.dir = os.path.join(args.dir, surf.name, 'rips')
 
     kwargs = {  'filt'      : { 'dir' : args.dir, 'save' : args.save, 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
-                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 9, 'color' : 'black'},
+                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 5, 'color' : 'black'},
                 'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red']}}, # 'fade' : [1, 0.5, 0.3]}},
                 'offset'    : { 'visible' : False, 'zorder' : 2,
                                 'color' : COLOR['red1'] if args.union else COLOR['red'],
@@ -54,12 +56,13 @@ if __name__ == '__main__':
         grid = make_grid(CFG['res'], CFG['shape'])
         surf = ScalarFieldData(args.file, grid)
 
-        rips = RipsComplex(sample.points, sample.radius * args.mult)
+        rips = RipsComplex(sample.points, sample.radius * args.mult * (1 if args.noim else args.coef))
         rips.sublevels(sample)
         filt = Filtration(rips, 'f')
-        hom =  Diagram(rips, filt, pivot=filt, verbose=True)
+        pivot = filt if args.noim else Filtration(rips, 'f', filter=lambda s: s['dist'] <= sample.radius * args.mult)
+        hom =  Diagram(rips, filt, pivot=pivot, verbose=True)
 
-        sample_dgms, _ = hom.get_diagram(rips, filt, filt)
+        sample_dgms = hom.get_diagram(rips, filt, pivot)
         surf_dgms = sfa_dio(surf.surface)
 
         plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'], lw=CFG['lw'])
@@ -69,7 +72,8 @@ if __name__ == '__main__':
             if not os.path.exists(args.dir):
                 print(f'making directory {args.dir}')
                 os.makedirs(args.dir)
-            fpath = os.path.join(args.dir, f'{name}_barcode.png')
+            im_str = '-noim' if args.noim else ''
+            fpath = os.path.join(args.dir, f'{name}_barcode{im_str}.png')
             print(f'saving {fpath}')
             plt.savefig(fpath, dpi=args.dpi, transparent=True)
         if args.show:

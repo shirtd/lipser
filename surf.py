@@ -9,10 +9,17 @@ from contours.plot import *
 from lips.geometry.util import lipschitz_grid
 
 
+SAMPLE_FILE='data/surf32-sample-1233_1.25e-01.csv'
+# SUB_FILE='data/surf32-sample-1233_1.25e-01-subsample_140.csv'
+# SUB_FILE='data/surf32-sample-1233_1.25e-01-subsample_266.csv'
+# SUB_FILE='data/surf32-sample-1233_1.3e-01-subsample_336.csv'
+SUB_FILE='data/surf32-sample-1233_1.3e-01-subsample_401.csv'
+
 parser = argparse.ArgumentParser(prog='lips')
 
 parser.add_argument('--file', default=os.path.join('data', 'surf32.csv'), help='surface file')
-parser.add_argument('--sample-file', default=None, help='sample file')
+parser.add_argument('--sample-file', default=SAMPLE_FILE, help='sample file')
+parser.add_argument('--sub-file', default=SUB_FILE, help='subsample file')
 parser.add_argument('--data-dir', default='data', help='data directory')
 parser.add_argument('--nosurf', action='store_true', help='hide surf')
 parser.add_argument('--show', action='store_true', help='show plot')
@@ -22,7 +29,7 @@ parser.add_argument('--dpi', type=int, default=300, help='image dpi')
 parser.add_argument('--tag', default='', help='file tag')
 parser.add_argument('--dir', default='figures', help='figure output directory')
 parser.add_argument('--sample', action='store_true', help='sample surface')
-parser.add_argument('--subsample', action='store_true', help='subsample surface')
+parser.add_argument('--sub', action='store_true', help='subsample surface')
 parser.add_argument('--color', action='store_true', help='color plot')
 parser.add_argument('--cover', action='store_true', help='plot cover')
 parser.add_argument('--union', action='store_true', help='plot union of cover')
@@ -33,7 +40,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     kwargs = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
-                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 9, 'color' : 'black'},
+                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 5, 'color' : 'black'},
                 'cover'    : { 'visible' : True, 'zorder' : 2,
                                 'color' : COLOR['red1'] if args.union else COLOR['red'],
                                 'alpha' : 1 if args.union else 0.2}}
@@ -65,10 +72,10 @@ if __name__ == '__main__':
         if args.cover or args.union:
             cover_plt = sample.plot_cover(ax, **kwargs['cover'])
 
-    if args.subsample or args.sample:
+    if args.sub or args.sample:
         _P = np.vstack([sample.points.T, sample.function]).T if args.sample_file is not None else None
-        if args.subsample:
-            P = get_subsample(fig, ax, surf.get_data(), args.thresh, _P)
+        if args.sub:
+            P = get_subsample(fig, ax, surf.get_data(), args.thresh, _P, args.sub_file)
             fname = os.path.join(args.data_dir, f'{sample.name}-subsample_{len(P)}.csv')
             if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
                 print('saving %s' % fname)

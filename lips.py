@@ -11,38 +11,54 @@ from contours.plot import *
 from lips.geometry.util import lipschitz_grid
 
 
+FILE='data/surf32.csv'
+SAMPLE_FILE='data/surf32-sample-1233_1.25e-01.csv'
+# SUB_FILE='data/surf32-sample-1233_1.25e-01-subsample_140.csv'
+# SUB_FILE='data/surf32-sample-1233_1.25e-01-subsample_266.csv'
+# SUB_FILE='data/surf32-sample-1233_1.25e-01-subsample_336.csv'
+SUB_FILE='data/surf32-sample-1233_1.25e-01-subsample_401.csv'
+
+RHO=2/np.sqrt(3)
+MULT=RHO*2/np.sqrt(3)
+
 parser = argparse.ArgumentParser(prog='lips')
 
-parser.add_argument('--file', default='data/surf32.csv', help='surface file')
-parser.add_argument('--sample-file', default='data/surf-sample_1067_1.3e-1.csv', help='sample file')
-parser.add_argument('--sub-file', default=None, help='subsample file')
-# parser.add_argument('--sub-file', default='data/surf-sample_329_2e-1.csv', help='subsample file')
-# parser.add_argument('--sub-file', default='data/surf32-partial-sample-510_1.3e-01.csv', help='subsample file')
-# parser.add_argument('--sub-file', default='data/surf32-partial-sample-393_1.3e-01.csv', help='subsample file')
-parser.add_argument('--mult', type=float, default=1., help='radius multiplier')
-parser.add_argument('--nomin', action='store_true', help='dont plot min extension')
-parser.add_argument('--nomax', action='store_true', help='dont plot max extension')
-parser.add_argument('--show', action='store_true', help='show plot')
-parser.add_argument('--wait', type=float, default=0.5, help='wait time (if --show)')
+# MODEL VARIABLES
+parser.add_argument('--coef', type=float, default=RHO, help='rips coef')
+parser.add_argument('--mult', type=float, default=MULT, help='radius multiplier')
+parser.add_argument('--sub', action='store_true', help='run subsample rips')
+
+# I/O VARIABLES
+parser.add_argument('--file', default=FILE, help='surface file')
+parser.add_argument('--sample-file', default=SAMPLE_FILE, help='sample file')
+parser.add_argument('--sub-file', default=SUB_FILE, help='subsample file')
 parser.add_argument('--save', action='store_true', help='save plot')
 parser.add_argument('--dpi', type=int, default=300, help='image dpi')
 parser.add_argument('--tag', default='', help='file tag')
 parser.add_argument('--dir', default='figures', help='output directory')
-parser.add_argument('--rips', action='store_true', help='run rips')
-parser.add_argument('--union', action='store_true', help='run offset union')
-parser.add_argument('--sub', action='store_true', help='run subsample rips')
+
+# VIZ VARIABLES
+parser.add_argument('--nomin', action='store_true', help='dont plot min extension')
+parser.add_argument('--nomax', action='store_true', help='dont plot max extension')
+parser.add_argument('--show', action='store_true', help='show plot')
+parser.add_argument('--wait', type=float, default=0.5, help='wait time (if --show)')
+
+# PROGRAM VARIABLES
 parser.add_argument('--barcode', action='store_true', help='run barcode')
+parser.add_argument('--union', action='store_true', help='run offset union')
+parser.add_argument('--rips', action='store_true', help='run rips')
 parser.add_argument('--cover', action='store_true', help='just plot cover')
 parser.add_argument('--nosample', action='store_true', help='just plot subsample')
 parser.add_argument('--nosub', action='store_true', help='just plot sample')
 parser.add_argument('--color', action='store_true', help='color complex by function values')
 parser.add_argument('--partial', action='store_true', help='save partial sample')
+parser.add_argument('--noim', action='store_true', help='don\'t do image persistence')
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    plt.ion()
+    # plt.ion()
 
     CFG = CONFIG['rainier' if 'rainier' in  args.sample_file else 'surf2']
     COLORS = [COLOR[c] for c in CFG['colors']]
@@ -52,9 +68,9 @@ if __name__ == '__main__':
 
     kwargs = {  'filt'      : { 'dir' : args.dir, 'save' : args.save, 'wait' : args.wait if args.show else None,
                                 'dpi' : args.dpi, 'hide'  : { 'min' : args.nomin, 'max' : args.nomax}},
-                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 20 if args.sub else 9,
+                'sample'    : { 'zorder' : 4, 'edgecolors' : 'black', 's' : 20 if args.sub else 5,
                                 'facecolors' : 'none' if args.sub else 'black'},
-                'subsample' : { 'c' : 'black', 's' : 9, 'zorder' : 5},
+                'subsample' : { 'c' : 'black', 's' : 5, 'zorder' : 5},
                 'rips'      : { 'max'   : { 'visible' : False, 'zorder' : 2, 'color' : COLOR['blue']},
                                 'min'   : { 'visible' : not (args.sub or args.nomin), 'zorder' : 1, 'color' : COLOR['red']}},
                 'offset'    : { 'max'   : { 'visible' : not args.nomax, 'zorder' : 2, 'alpha' : 1 if args.union else 0.1,
@@ -105,12 +121,17 @@ if __name__ == '__main__':
         grid = make_grid(CFG['res'], CFG['shape'])
         surf = ScalarFieldData(args.file, grid)
 
-        rips = RipsComplex(sample.points, sample.radius * args.mult)
+        rips = RipsComplex(sample.points, sample.radius * args.mult * (1 if args.noim else args.coef))
         rips.lips_sub(subsample, CFG['lips'])
-        min_filt, max_filt = Filtration(rips, 'min'), Filtration(rips, 'max')
-        hom =  Diagram(rips, min_filt, pivot=max_filt, verbose=True)
+        if args.noim:
+            max_filt = Filtration(rips, 'max')
+        else:
+            max_filt = Filtration(rips, 'max', filter=lambda s: s['dist'] <= sample.radius * args.mult)
+        min_filt = Filtration(rips, 'min')
+        hom = Diagram(rips, min_filt, pivot=max_filt, verbose=True)
 
-        sample_dgms, _ = hom.get_diagram(rips, min_filt, max_filt)
+        smoothing = lambda p: [p[0]+CFG['lips']*sample.radius/4, p[1]-CFG['lips']*sample.radius/4]
+        sample_dgms = hom.get_diagram(rips, min_filt, max_filt, smoothing=smoothing)
         surf_dgms = sfa_dio(surf.surface)
 
         plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'], lw=CFG['lw'])
@@ -120,7 +141,8 @@ if __name__ == '__main__':
             if not os.path.exists(args.dir):
                 print(f'making directory {args.dir}')
                 os.makedirs(args.dir)
-            fpath = os.path.join(args.dir, f'{name}_barcode.png')
+            im_str = '-noim' if args.noim else ''
+            fpath = os.path.join(args.dir, f'{name}_barcode{im_str}.png')
             print(f'saving {fpath}')
             plt.savefig(fpath, dpi=args.dpi, transparent=True)
         if args.show:

@@ -44,11 +44,15 @@ class Reduction:
                     self[low] = i
 
 class Diagram(Reduction):
-    def __init__(self, K, F, R=set(), coh=False, pivot=None, clearing=False, verbose=False):
+    def __init__(self, K, F, R=set(), coh=False, pivot=None, clearing=False, verbose=False, domap=False):
         pivot = F if pivot is None else pivot
         Reduction.__init__(self, K, F, R, coh, pivot)
         self.reduce(clearing, verbose)
-        self.diagram, self.fmap = self.get_diagram(K, F, pivot)
+        res = self.get_diagram(K, F, pivot)
+        if domap:
+            self.diagram, self.fmap = res
+        else:
+            self.diagram, self.fmap = res, None
     def __call__(self, i):
         if i in self.fmap:
             return self.fmap[i]
@@ -65,21 +69,26 @@ class Diagram(Reduction):
         yield from self.pairs.values()
     def is_relative(self, i):
         return i in self.R
-    def get_diagram(self, K, F, pivot=None):
+    def get_diagram(self, K, F, pivot=None, smoothing=None, domap=False):
         pivot = F if pivot is None else pivot
         fmap, dgms = {}, [[] for d in range(self.dim+1)]
         for i, j in self.items():
             b, d = K[pivot[i]], K[F[self[i]]]
             fmap[i] = [b(pivot.key), d(F.key)][::(-1 if F.reverse else 1)]
+            if smoothing is not None:
+                fmap[i] = smoothing(fmap[i])
             if fmap[i][0] < fmap[i][1]:
                 dgms[b.dim].append(fmap[i])
         for i in self.unpairs:
             b = K[F[i]]
-            fmap[i] = [b(pivot.key), np.inf]
+            fmap[i] = [b(pivot.key) if smoothing is None else b(pivot.key), np.inf]
             dgms[b.dim].append(fmap[i])
-        dgms = [np.array(sorted(d,key=lambda p: p[0])) for d in dgms]
+        dgms = [np.array(sorted(filter(lambda p: p[0] < p[1], d),
+                            key=lambda p: p[0])) for d in dgms]
         # dgms = list(map(np.array, dgms))
-        return dgms, fmap
+        if domap:
+            return dgms, fmap
+        return dgms
     # def element_pair(self, K, F, i):
     #     return [K[F[i]], K[F[self[i]]]]
     # def element_diagram(self, K, F):

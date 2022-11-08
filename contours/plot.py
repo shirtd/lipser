@@ -8,11 +8,12 @@ from lips.util import lmap
 from contours import COLOR
 
 
-def init_barcode(figsize=(6,4)):
-    fig, ax = plt.subplots(2,1,sharex=True, figsize=figsize)
-    # ax[0].invert_yaxis()
-    ax[1].set_xticks([])
-    # ax[1].set_ylim(5,-1)
+def init_barcode(figsize=(6,4), hide_ticks=False, ylim=None):
+    fig, ax = plt.subplots(2, 1, sharex=True, figsize=figsize)
+    if hide_ticks:
+        ax[1].set_xticks([])
+    if ylim is not None:
+        ax[1].set_ylim(*ylim)
     plt.tight_layout()
     return fig, ax
 
@@ -210,15 +211,21 @@ def get_sample(fig, ax, S, thresh, P=None, color=COLOR['pink1']):
     P = sorted(P, key=lambda x: x[1])
     return np.vstack(P)
 
-def get_subsample(fig, ax, S, thresh, P, color=COLOR['pink1']):
+def get_subsample(fig, ax, S, thresh, P, sub_file=None, color=COLOR['pink1']):
     cover_plt = plot_balls(ax, P, np.ones(len(P))*thresh/2, alpha=0.5, color='gray', zorder=2)
     T = KDTree(P[:,:2])
-    Q = []
+    Q = [] if sub_file is None else list(np.loadtxt(sub_file, dtype=int))
+    for idx in Q:
+        ax.scatter(P[idx,0],P[idx,1],marker='*',zorder=5,color='black')
+        cover_plt[idx].set_color(color)
+        cover_plt[idx].set_alpha(1)
+        cover_plt[idx].set_zorder(3)
     def onclick(event):
         idx = T.query(np.array([event.xdata,event.ydata]))[1]
         cover_plt[idx].set_color(color)
         cover_plt[idx].set_alpha(1)
-        cover_plt[idx].set_zorder(6)
+        cover_plt[idx].set_zorder(3)
+        ax.scatter(P[idx,0],P[idx,1], marker='*',zorder=4)
         plt.pause(0.1)
         Q.append(int(idx))
     cid = fig.canvas.mpl_connect('button_press_event', onclick)

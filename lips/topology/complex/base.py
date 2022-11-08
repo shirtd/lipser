@@ -67,9 +67,9 @@ class Complex:
         yield from self.__map.values()
     def __contains__(self, key):
         return hash(key) in self.__map
-    def get_sequence(self, key, reverse=False):
+    def get_sequence(self, key, reverse=False, filter=None):
         r = -1 if reverse else 1
-        return sorted(self, key=lambda s: (r * s(key), s))
+        return sorted(self if filter is None else filter(self), key=lambda s: (r * s(key), s))
     def closure(self, s):
         return {s}.union({f for t in self.faces(s) for f in self.closure(t)})
     def __repr__(self):

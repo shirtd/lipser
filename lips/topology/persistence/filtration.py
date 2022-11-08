@@ -3,7 +3,7 @@ from lips.util import insert, partition
 
 
 class Filtration:
-    def __init__(self, K, key, reverse=False):
+    def __init__(self, K, key, reverse=False, filter=None):
         self.sequence = K.get_sequence(key, reverse)
         self.dim, self.key, self.reverse = K.dim, key, reverse
         self.imap = {hash(s) : i for i, s in enumerate(self)}
