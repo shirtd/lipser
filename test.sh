@@ -19,6 +19,7 @@ SAMPLE='data/rainier_peak-sample-683_7e-02.csv'
 # SUB='data/surf32-sample-1233_1.25e-01-subsample_401.csv'
 # PARTIAL='data/surf32-partial-sample-393_1.3e-01.csv'
 
+python surf.py --file 'data/rainier/small/test.csv' --show
 
 python surf.py --save --file $SURF --contours
 

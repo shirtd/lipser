@@ -35,6 +35,7 @@ def init_surface(shape, pad, mult=10):
     ax.axis('scaled')
     ax.set_xlim(-l[0],l[0])
     ax.set_ylim(-l[1],l[1])
+    ax.invert_yaxis()
     ax.axis('off')
     plt.tight_layout()
     return fig, ax

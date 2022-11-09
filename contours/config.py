@@ -17,6 +17,19 @@ CONFIG = {  'surf32' :    {'res' : 32, 'shape' : (2,1), 'pad' : (1.2, 1.55),
                         'labels' : ['A', 'B', 'C', 'D', 'E'],
                         'min' : 265.258441, 'max' : 4379.845434, 'lw' : 1,
                         'lips' : 46519.52591999933},
+            'rainier_super16' : {'res' : 1350, 'shape' : (1,1), 'pad' : (1.3, 1.3),
+                        'cuts' : [1200, 1800, 2000, 2500, 3100, 4500],
+                        'colors' : ['blue','green','yellow','salmon','purple'],
+                        'labels' : ['A', 'B', 'C', 'D', 'E'],
+                        'min' : 265.258441, 'max' : 4379.845434, 'lw' : 1,
+                        'lips' : 46519.52591999933},
+            'test' : {'res' : 1692, 'shape' : (1,0.6383), 'pad' : (1.3, 1.3),
+                        # 'cuts' : list(1850 + 333 * np.array([0, 0.9, 2.2, 4.20, 6.9])) + [4500],
+                        'cuts' : [1850, 2130, 2585, 3180, 4175, 4500],
+                        'colors' : ['blue','green','yellow','salmon','purple'],
+                        'labels' : ['A', 'B', 'C', 'D', 'E'],
+                        'min' : 265.258441, 'max' : 4379.845434, 'lw' : 1,
+                        'lips' : 46519.52591999933},
             'rainier_peak' : {'res' : 230, 'shape' : (1,1), 'pad' : (1.3, 1.3),
                         'cuts' : [1800, 2000, 2300, 2600, 3100, 4500],
                         'colors' : ['blue','green', 'yellow', 'salmon', 'purple'],
@@ -35,3 +48,5 @@ CONFIG['surf32_2']['labels'] = ['A', 'B', 'C', 'D', 'E']
 
 CONFIG['surf8'] = CONFIG['surf32'].copy()
 CONFIG['surf8']['res'] = 8
+
+# print(CONFIG['test']['cuts'])

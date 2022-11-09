@@ -7,8 +7,8 @@ from lips.util.math import mk_gauss
 from lips.geometry.util import lipschitz
 
 def make_grid(resolution=32, shape=(2,1)):
-    return np.meshgrid( np.linspace(-shape[0], shape[0], resolution*shape[0]),
-                        np.linspace(-shape[1], shape[1], resolution*shape[1]))
+    return np.meshgrid( np.linspace(-shape[0], shape[0], int(resolution*shape[0])),
+                        np.linspace(-shape[1], shape[1], int(resolution*shape[1])))
 
 class DataFile:
     def __init__(self, file_name, dir='./'):

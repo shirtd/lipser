@@ -56,7 +56,7 @@ if __name__ == '__main__':
     surf = ScalarFieldData(args.file, grid, CFG['lips'])
     args.dir = os.path.join(args.dir, surf.name, 'surf')
 
-    print(lipschitz_grid(surf.surface, surf.grid[0], surf.grid[1]))
+    # print(lipschitz_grid(surf.surface, surf.grid[0], surf.grid[1]))
     # print(CFG['lips'])
 
     if args.save and not os.path.exists(args.dir):
