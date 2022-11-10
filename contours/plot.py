@@ -29,12 +29,17 @@ def reset_plot(ax, scale=None, clear=True):
         ax.set_xlim(-scale, scale)
         ax.set_ylim(-scale, scale)
 
-def init_surface(shape, pad, mult=10):
-    fig, ax = get_fig(shape, mult)
-    l = np.array(shape) * np.array(pad)
+def init_surface(shape, pad=1.3, mult=10, extents=None):
+    fig, ax = get_fig((shape[0] / shape[1], 1), mult)
     ax.axis('scaled')
-    ax.set_xlim(-l[0],l[0])
-    ax.set_ylim(-l[1],l[1])
+    if extents is None:
+        l = np.array(shape) * np.array(pad)
+        ax.set_xlim(-l[0],l[0])
+        ax.set_ylim(-l[1],l[1])
+    else:
+        l = np.array(extents) * 1.3
+        ax.set_xlim(*extents[0])
+        ax.set_ylim(*extents[1])
     ax.invert_yaxis()
     ax.axis('off')
     plt.tight_layout()

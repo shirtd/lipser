@@ -1,14 +1,24 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+import os, json
 
+from contours import COLOR
 from lips.util import lmap
 from lips.util.math import mk_gauss
-from lips.geometry.util import lipschitz
+from lips.util.array import down_sample
+from lips.geometry.util import lipschitz, lipschitz_grid
 
 def make_grid(resolution=32, shape=(2,1)):
     return np.meshgrid( np.linspace(-shape[0], shape[0], int(resolution*shape[0])),
                         np.linspace(-shape[1], shape[1], int(resolution*shape[1])))
+
+def measure(lon1, lat1, lon2, lat2):
+    R = 6378.137
+    dLat = lat2 * np.pi / 180 - lat1 * np.pi / 180
+    dLon = lon2 * np.pi / 180 - lon1 * np.pi / 180;
+    a = (np.sin(dLat/2) * np.sin(dLat/2) + np.cos(lat1 * np.pi / 180)
+        * np.cos(lat2 * np.pi / 180) * np.sin(dLon/2) * np.sin(dLon/2))
+    return 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a)) * R * 1000
 
 class DataFile:
     def __init__(self, file_name, dir='./'):
@@ -109,14 +119,76 @@ class GaussianSurface(Surface):
         Surface.__init__(self, surface, grid)
 
 class ScalarField(Surface):
-    def __init__(self, surface, grid, constant=None):
+    def __init__(self, surface, grid, lips=None):
         self.function = surface.flatten()
         Surface.__init__(self, surface, grid)
-        self.constant = constant
+        if lips is None:
+            lips = lipschitz_grid(surface, grid[0], grid[1])
+        self.lips = lips
     def __call__(self, x):
         return self.function[x]
     def __getitem__(self, i):
         return self.grid_points[i]
+
+
+
+class USGSScalarField(ScalarField):
+    def __init__(self, surface, extents, lips=None):
+        surface, self.extents = surface, extents
+        grid = self.get_grid(extents, surface.shape)
+        ScalarField.__init__(self, surface, grid, lips)
+    def get_grid(self, extents, shape):
+        return np.meshgrid( np.linspace(*extents[0], shape[0]),
+                            np.linspace(*extents[1], shape[1]),
+                            indexing='ij')
+
+class USGSScalarFieldData(USGSScalarField):
+    def __init__(self, fname, jname=None):
+        surface = np.loadtxt(fname)
+        if jname is None:
+            jname = f'{os.path.splitext(fname)[0]}.json'
+        with open(jname, 'r') as f:
+            data = json.load(f)
+        USGSScalarField.__init__(self, surface, data['extents'], data['lips'])
+        self.cuts, self.colors, self.pad = data['cuts'], data['colors'], data['pad']
+
+
+class USGSScalarFieldRaw(USGSScalarField):
+    def __init__(self, file, dir=None, name=None, downsample=None):
+        self.dir = os.path.dirname(file) if dir is None else dir
+        surface, self.name = self.get_surface(file, name, downsample)
+        extents = self.get_extents(file)
+        USGSScalarField.__init__(self, surface, extents)
+    def get_extents(self, file):
+        with open(file, 'r') as f:
+            cols, rows = (int(f.readline().split()[1]), int(f.readline().split()[1]))
+            xl, yl = (float(f.readline().split()[1]), float(f.readline().split()[1]))
+            step = float(f.readline().split()[1])
+                    # lon1, lat1, lon2, lat2
+        xd = measure(xl, yl, xl+cols*step, yl)
+        yd = measure(xl, yl, xl, yl+rows*step)
+        return [[-xd/2, xd/2], [-yd/2, yd/2]]
+        # return [[xl, xl + cols * step], [yl, yl + rows * step]]
+    def get_surface(self, file, name, downsample):
+        name = os.path.basename(os.path.splitext(file)[0]) if name is None else name
+        surface = np.loadtxt(file, skiprows=6)
+        if downsample is not None:
+            surface = down_sample(surface, downsample)
+            name += str(downsample)
+        return surface, name
+    def save(self, cuts, colors, pad):
+        hname = os.path.join(self.dir, f'{self.name}.json')
+        out = {'cuts' : cuts, 'pad' : pad,
+                'colors' : [COLOR[c] for c in colors],
+                'shape' : self.surface.shape,
+                'extents' : self.extents,
+                'lips' : self.lips}
+        print(f'saving {hname}')
+        with open(hname, 'w') as f:
+            json.dump(out, f, indent=2)
+        fname = os.path.join(self.dir, f'{self.name}.csv')
+        print(f'saving {fname}')
+        np.savetxt(fname, self.surface)
 
 class ScalarFieldData(ScalarField, DataFile):
     def __init__(self, file_name, grid=None, constant=None, dir='./'):
