@@ -1,7 +1,7 @@
-import numpy as np
+from itertools import combinations, product, permutations
 import numpy.linalg as la
-from itertools import combinations
 from tqdm import tqdm
+import numpy as np
 
 from lips.util.math import ripple
 # from lips import util
@@ -22,13 +22,17 @@ def get_delta(n, w=1, h=1):
 def lipschitz(F, P):
     return max(abs(fp - fq) / la.norm(p - q) for (fp,p), (fq,q) in tqdm(list(combinations(zip(F,P), 2))))
 
-def lipschitz_grid(G, X, Y):
-    def _lips(i,j):
-        p, f = np.array([X[i,j], Y[i,j]]), G[i,j]
-        its = [(-1,0), (1,0), (0,-1), (0,1), (-1,-1), (1,-1), (-1,1), (1,1)]
-        return max(abs(f - G[i+a,j+b]) / la.norm(p - np.array([X[i+a,j+b], Y[i+a,j+b]])) for a,b in its)
-    return max(_lips(i,j) for j in tqdm(range(1, G.shape[1]-1)) for i in range(1, G.shape[0]-1))
+def lipschitz_grid(F, G):
+    def c(i,j,a,b):
+        return abs(F[i,j] - F[i+a,j+b]) / la.norm(G[:,i,j] - G[:,i+a,j+b])
+    it = tqdm(list(product(range(1, F.shape[0]-1), range(1, F.shape[1]-1))))
+    return max(c(i,j,a,b) for i,j in it for a,b in permutations([-1,0,1],2))
 
+def coords_to_meters(lon1, lat1, lon2, lat2, R=6378.137):
+    coords = np.array([[lon1, lon2], [lat1, lat2]]) * np.pi / 180
+    dlon, dlat = coords[0,1] - coords[0,0], coords[1,1] - coords[1,0]
+    a = np.sin(dlat/2)**2 + np.sin(dlon/2)**2 * np.cos(coords[1,0]) * np.cos(coords[1,1])
+    return 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a)) * R * 1000
 
 def ripple_lips(a=0, b=1, n=1024, f=1, l=1, d=1, w=1, s=1):
     t = np.linspace(a, b, n)

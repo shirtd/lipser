@@ -8,7 +8,17 @@ from lips.util import lmap
 from contours import COLOR
 
 
-def init_barcode(figsize=(6,4), hide_ticks=False, ylim=None):
+def init_barcode(figsize=(12,7), hide_ticks=False, ylim=None):
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+    if hide_ticks:
+        ax[1].set_xticks([])
+    if ylim is not None:
+        ax[1].set_ylim(*ylim)
+    ax.set_yticks([])
+    plt.tight_layout()
+    return fig, ax
+
+def init_barcodes(figsize=(6,4), hide_ticks=False, ylim=None):
     fig, ax = plt.subplots(2, 1, sharex=True, figsize=figsize)
     if hide_ticks:
         ax[1].set_xticks([])
@@ -45,7 +55,8 @@ def reset_plot(ax, scale=None, clear=True):
 #     plt.tight_layout()
 #     return fig, ax
 
-def init_surface(shape, extents, mult=8):
+def init_surface(shape, extents, pad=1000, mult=8):
+    extents = [[a-pad,b+pad] for a,b in extents]
     dx = abs(extents[0][0] - extents[0][1])
     dy = abs(extents[1][0] - extents[1][1])
     fig, ax = get_fig((1, dy/dx), mult)
@@ -220,14 +231,15 @@ def plot_sfa(ax, sample, levels, kw, name, dir='figures', save=True, wait=0.5, d
 
 def get_sample(fig, ax, S, thresh, P=None, color=COLOR['pink1']):
     if P is not None:
-        plot_balls(ax, P, np.ones(len(P))*thresh/2, alpha=1, color='gray', zorder=2)
+        plot_points(ax, P, color='black', zorder=3, s=5)
+        plot_balls(ax, P, np.ones(len(P))*thresh/2, alpha=1., color='gray', zorder=2)
         P = list(P)
     else:
         P = []
     T = KDTree(S[:,:2])
     def onclick(event):
         p = S[T.query(np.array([event.xdata,event.ydata]))[1]]
-        ax.add_patch(plt.Circle(p, thresh/2, color=color, zorder=3, alpha=0.5))
+        ax.add_patch(plt.Circle(p, thresh/2, color=color, zorder=3, alpha=1))
         ax.scatter(p[0], p[1], c='black', zorder=4, s=5)
         plt.pause(0.1)
         P.append(p)
