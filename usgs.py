@@ -11,6 +11,8 @@ from lips.geometry.util import lipschitz_grid
 from lips.util.array import down_sample
 
 DATA_DIR = os.path.join('data','rainier')
+CUTS=[200, 1000, 1400, 1800, 2500, 4500]
+# CUTS=[1850, 2130, 2585, 3180, 4175, 4500]
 
 parser = argparse.ArgumentParser(prog='rainier')
 
@@ -18,16 +20,28 @@ parser.add_argument('file', help='surface file')
 parser.add_argument('--name', default=None, help='data name')
 parser.add_argument('--dir', default=None, help='data directory')
 parser.add_argument('--downsample', default=None, type=int, help='downsample')
-parser.add_argument('--cuts', default=[1850, 2130, 2585, 3180, 4175, 4500], nargs='+', type=float, help='cuts')
+parser.add_argument('--cuts', default=CUTS, nargs='+', type=float, help='cuts')
 parser.add_argument('--colors', default=['blue','green','yellow','salmon','purple'], nargs='+', type=str, help='colors')
 parser.add_argument('--pad', default=[1.3, 1.3], nargs=2, help='padding')
+parser.add_argument('--lips', default=None, type=float, help='lipschitz constant')
+parser.add_argument('--show', action='store_true')
+parser.add_argument('--save', action='store_true')
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    args.colors = [COLOR[c] for c in args.colors]
 
-    data = USGSScalarFieldRaw(args.file, args.dir, args.name, args.downsample)
-    data.save(args.cuts, args.colors, args.pad)
+    surf = USGSScalarFieldRaw(args.file, args.dir, args.name, args.downsample)
+
+    if args.show:
+        fig, ax = init_surface(surf.surface.shape, surf.extents)
+        surf_plt = plot_surface(ax, surf, args.cuts, args.colors, zorder=0, alpha=0.5)
+        plt.show()
+
+    if args.save:
+        surf.save({'cuts' : args.cuts, 'colors' : args.colors, 'pad' : args.pad})
+
 
 
 # def measure(lon1, lat1, lon2, lat2):

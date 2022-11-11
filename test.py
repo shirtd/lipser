@@ -47,13 +47,7 @@ if __name__ == '__main__':
     # fig, ax = init_surface(surf.surface.shape, extents=surf.extents)
     # surf_plt = surf.plot(ax, surf.surface, surf.cuts, surf.colors, alpha=0.5)
 
-    fig, ax = get_fig((surf.surface.shape[1] / surf.surface.shape[0], 1), 10)
-    ax.axis('scaled')
-    ax.set_xlim(*surf.extents[0])
-    ax.set_ylim(*surf.extents[1])
-    ax.invert_yaxis()
-    ax.axis('off')
-    plt.tight_layout()
+    fig, ax = init_surface(surf.surface.shape, surf.extents)
     surf_plt = plot_surface(ax, surf, surf.cuts, surf.colors, zorder=0, alpha=0.5)
 
 
