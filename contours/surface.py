@@ -109,6 +109,7 @@ class USGSScalarField(ScalarField):
         return np.array([[0, xd], [0, yd]])
     def get_surface(self, file, name, downsample):
         name = os.path.basename(os.path.splitext(file)[0]) if name is None else name
+        print(f'loading {file}')
         surface = np.loadtxt(file, skiprows=6)
         if downsample is not None:
             surface = down_sample(surface, downsample)
@@ -155,12 +156,14 @@ class Sample:
     def __init__(self, points, function):
         self.points = points
         self.function = function
-    def get_levels(self, cuts, margin=0.5):
+    def get_levels(self, cuts, margin=200):
         # fmin = self.function.min()
         # fmax = self.function.max()
         # diff = fmax - fmin
         # levels = [fmin-diff*margin] + cuts + [fmax+diff*margin]
         # return [(a+b)/2 for a,b in zip(levels[:-1],levels[1:])]
+        cuts = [int(a+(b-a)/2) for a,b in zip([cuts[0]-margin]+cuts, cuts+[cuts[-1]+margin])]
+        # print(cuts)
         return cuts
     def __getitem__(self, i):
         return self.points[i]

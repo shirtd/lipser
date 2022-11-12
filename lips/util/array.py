@@ -23,7 +23,7 @@ def down_sample(G, l):
     elif mrem > 0:
         G = G[:, mrem//2:-mrem//2]
     D = np.zeros((_N, _M), dtype=float)
-    for j in tqdm.tqdm(range(_M)):
+    for j in tqdm.tqdm(range(_M), desc=f'downsample {l}'):
         for i in range(_N):
             x = G[i*l:(i+1)*l, j*l:(j+1)*l].sum() / (l ** 2)
             D[i, j] = x if x > 0 else 0

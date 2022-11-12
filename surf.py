@@ -18,10 +18,10 @@ SAMPLE='rainier_small8-sample666_1000.csv'
 
 FILE=os.path.join(DDIR, f'{DSET}{RES}.csv') # None #
 # JSON= None # os.path.join(DDIR, f'{DSET}{RES}.json')
-SAMPLE_FILE=None # os.path.join(DDIR, 'samples', SAMPLE) # 
+SAMPLE_FILE=None # os.path.join(DDIR, 'samples', SAMPLE) #
 SUB_FILE= None
 
-MULT=4/3
+MULT=1. # 4/3
 
 parser = argparse.ArgumentParser(prog='surf')
 
@@ -56,7 +56,7 @@ parser.add_argument('--thresh', type=float, default=None, help='cover radius')
 parser.add_argument('--wait', type=float, default=0.5, help='wait')
 parser.add_argument('--rips', action='store_true', help='run rips')
 parser.add_argument('--graph', action='store_true', help='just plot graph')
-parser.add_argument('--coef', default=MULT*2/np.sqrt(3), type=float, help='rips coef')
+parser.add_argument('--coef', default=1.)#MULT*2/np.sqrt(3), type=float, help='rips coef')
 
 LW=0.3
 SIZE=1
@@ -76,7 +76,7 @@ if __name__ == '__main__':
                 'filt'      : { 'dir' : args.dir, 'save' : args.save,
                                 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
                 'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
-                                        'fade' : [1, 1, 0 if args.graph else 1], 'lw' : LW}},
+                                        'fade' : [1, 1, 0 if args.graph else 0.7], 'lw' : LW}},
                 'barcode'   : { 'lw' : 5}}
 
 
@@ -85,6 +85,8 @@ if __name__ == '__main__':
         sample = SampleData(args.sample_file, args.thresh)
         if args.thresh is None:
             args.thresh = sample.radius
+    else:
+        sample = None
     # if args.subsample_file is not None:
     #     subsample = SubsampleData(args.subsample_file, sample, args.thresh)
 
@@ -135,8 +137,9 @@ if __name__ == '__main__':
                             rips_plt[k][d][s].set_visible(not kwargs['rips'][k]['visible'])
             if args.show and args.wait is not None:
                 plt.pause(args.wait)
-            sample_str = '' if args.sample_file is None else sample.get_tag(args)
-            surf.save_plot(args.dir, dpi=args.dpi, name=sample_str, tag=format_float(t))
+            if args.save:
+                sample_str = '' if args.sample_file is None else sample.get_tag(args)
+                surf.save_plot(args.dir, dpi=args.dpi, name=sample_str, tag=format_float(t))
             # if save:
             #     # t_str = np.format_float_scientific(t, trim='-')
             #     fname = os.path.join(dir, f'{name}{format_float(t)}.png')
@@ -154,7 +157,7 @@ if __name__ == '__main__':
     #     offset_plt = plot_sfa(ax, sample, levels, kwargs['offset'], name, **kwargs['filt'])
 
     if args.save:
-        sample_str = '' if args.sample_file is None else sample.get_tag(args)
+        sample_str = surf.name if args.sample_file is None else sample.get_tag(args)
         surf.save_plot(args.dir, dpi=args.dpi, name=sample_str)
 
     if args.barcode:
