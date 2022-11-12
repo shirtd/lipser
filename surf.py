@@ -7,18 +7,21 @@ from contours.surface import *
 from contours.plot import *
 
 from lips.topology.util import sfa_dio
+from lips.topology import RipsComplex, Filtration, Diagram
 from lips.geometry.util import lipschitz_grid
 
 RES=8 # 16 # 32 #
 DSET='rainier_small' # 'rainier_sub' # 'northwest' #
 DIR=os.path.join('data')
 DDIR=os.path.join(DIR, DSET)
-SAMPLE='rainier_small8-666_1000.csv'
+SAMPLE='rainier_small8-sample666_1000.csv'
 
-FILE= None # os.path.join(DDIR, f'{DSET}{RES}.csv')
+FILE=os.path.join(DDIR, f'{DSET}{RES}.csv') # None #
 # JSON= None # os.path.join(DDIR, f'{DSET}{RES}.json')
-SAMPLE_FILE=None # os.path.join(DDIR, 'samples', SAMPLE)
+SAMPLE_FILE=None # os.path.join(DDIR, 'samples', SAMPLE) # 
 SUB_FILE= None
+
+MULT=4/3
 
 parser = argparse.ArgumentParser(prog='surf')
 
@@ -49,6 +52,14 @@ parser.add_argument('--sample', action='store_true', help='sample surface')
 parser.add_argument('--subsample', action='store_true', help='subsample surface')
 parser.add_argument('--thresh', type=float, default=None, help='cover radius')
 
+# RIPS
+parser.add_argument('--wait', type=float, default=0.5, help='wait')
+parser.add_argument('--rips', action='store_true', help='run rips')
+parser.add_argument('--graph', action='store_true', help='just plot graph')
+parser.add_argument('--coef', default=MULT*2/np.sqrt(3), type=float, help='rips coef')
+
+LW=0.3
+SIZE=1
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -59,15 +70,17 @@ if __name__ == '__main__':
         args.json = f'{os.path.splitext(args.file)[0]}.json'
 
     kwargs = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
-                'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : 5, 'color' : 'black'},
-                'cover'     : { 'visible' : True, 'zorder' : 2,
-                                'color' : COLOR['red1'] if args.union else COLOR['red'],
-                                'alpha' : 1 if args.union else 0.2},
+                'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : SIZE, 'color' : 'black'},
+                'cover'     : { 'visible' : True, 'zorder' : 2, 'alpha' : 1 if args.union else 0.2,
+                                'color' : COLOR['red1'] if args.union else COLOR['red']},
+                'filt'      : { 'dir' : args.dir, 'save' : args.save,
+                                'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
+                'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
+                                        'fade' : [1, 1, 0 if args.graph else 1], 'lw' : LW}},
                 'barcode'   : { 'lw' : 5}}
 
 
     surf = ScalarFieldData(args.file, args.json)
-    print(surf.pad)
     if args.sample_file is not None:
         sample = SampleData(args.sample_file, args.thresh)
         if args.thresh is None:
@@ -96,9 +109,53 @@ if __name__ == '__main__':
                 del kwargs['cover']['zorder']
             cover_plt = sample.plot_cover(ax, **kwargs['cover'])
 
+    if args.rips or args.graph:
+        # name = f'{name}_rips' if args.rips else f'{name}_graph'
+        # if args.graph:
+        #     surf_plt = surf.plot(ax, CFG['cuts'], COLORS, **kwargs['surf'])
+        rips = RipsComplex(sample.points, sample.radius*args.coef, verbose=True)
+        levels = sample.get_levels(surf.cuts)
+        rips.sublevels(sample)
+        if args.color:
+            # name += '_color'
+            del kwargs['rips']['f']['color']
+            kwargs['rips']['f']['tri_colors'] = [get_color(sample(t).max(), surf.cuts, surf.colors) for t in rips(2)]
+        # rips_plt = plot_rips_filtration(ax, rips, levels, kwargs['rips'], sample.name, dir=os.path.join() : args.dir, 'save' : args.save,
+        # keys=kwargs['rips']
+
+        # def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300, hide={}):
+        print(' plotting rips...')
+        rips_plt = {k : plot_rips(ax, rips, **v) for k,v in kwargs['rips'].items()}
+        print('\tdone')
+        for i, t in enumerate(levels):
+            for d in (1,2):
+                for s in rips(d):
+                    for k,v in rips_plt.items():
+                        if s.data[k] <= t:
+                            rips_plt[k][d][s].set_visible(not kwargs['rips'][k]['visible'])
+            if args.show and args.wait is not None:
+                plt.pause(args.wait)
+            sample_str = '' if args.sample_file is None else sample.get_tag(args)
+            surf.save_plot(args.dir, dpi=args.dpi, name=sample_str, tag=format_float(t))
+            # if save:
+            #     # t_str = np.format_float_scientific(t, trim='-')
+            #     fname = os.path.join(dir, f'{name}{format_float(t)}.png')
+            #     print(f'saving {fname}')
+            #     plt.savefig(fname, dpi=dpi, transparent=True)
+            # return rips_plt
+        #                 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},**kwargs['filt'])
+    # else:
+    #     name = f'{name}_offset'
+    #     if args.color:
+    #         del kwargs['offset']['color']
+    #         kwargs['offset']['colors'] = [get_color(f, CFG['cuts'], [COLOR[c] for c in CFG['colors']]) for f in sample.function]
+    #         kwargs['offset']['zorders'] = [get_cut(f, CFG['cuts'], kwargs['offset']['zorder']+1) for f in sample.function]
+    #         del kwargs['offset']['zorder']
+    #     offset_plt = plot_sfa(ax, sample, levels, kwargs['offset'], name, **kwargs['filt'])
+
     if args.save:
         sample_str = '' if args.sample_file is None else sample.get_tag(args)
-        surf.save_plot(args.dir, sample_str, args.dpi)
+        surf.save_plot(args.dir, dpi=args.dpi, name=sample_str)
 
     if args.barcode:
         bar_fig, bar_ax = init_barcode()

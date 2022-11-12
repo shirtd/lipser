@@ -47,7 +47,7 @@ class VoronoiComplex(DualComplex, EmbeddedComplex):
         return all(in_bounds(self.P[v], bounds) for v in s)
 
 class RipsComplex(SimplicialComplex, EmbeddedComplex):
-    def __init__(self, P, thresh, dim=2, verbose=False, desc='[rips'):
+    def __init__(self, P, thresh, dim=2, verbose=False, desc='rips'):
         EmbeddedComplex.__init__(self, P)
         for x in tqit(dio.fill_rips(P, dim, thresh), verbose, desc):
             s = stuple(x)
@@ -57,11 +57,11 @@ class RipsComplex(SimplicialComplex, EmbeddedComplex):
         return True
     def to_dict(self):
         return {d : self(d) for d in range(3)}
-    def sublevels(self, sample, key='f'):
-        for s in self:
+    def sublevels(self, sample, key='f', verbose=False):
+        for s in tqit(self, verbose, 'sub'):
             s.data[key] = sample(s).max()
-    def superlevels(self, sample, key='f'):
-        for s in self:
+    def superlevels(self, sample, key='f', verbose=False):
+        for s in tqit(self, verbose, 'sup'):
             s.data[key] = sample(s).min()
     def lips(self, sample, constant):
         for s in self(1):

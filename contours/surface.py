@@ -17,6 +17,7 @@ class DataFile:
         self.folder = os.path.dirname(file_name)
         self.name, self.extension = os.path.splitext(self.file)
     def load(self):
+        print(f'loading {self.path}')
         return np.loadtxt(self.path)
 
 class Surface:
@@ -49,20 +50,20 @@ class Surface:
         if show:
             plt.pause(0.5)
         return surf_plt
-    def save_plot(self, dir='./', tag=None, dpi=300, sep='_'):
+    def save_plot(self, dir='./', tag=None, dpi=300, sep='_', name=None):
         tag = '' if (tag is None or not len(tag)) else sep+tag
         dir = os.path.join(dir, self.name)
         if not os.path.exists(dir):
             print(f'creating directory {dir}')
             os.makedirs(dir)
-        fpath = os.path.join(dir, f'{self.name}{tag}.png')
+        fpath = os.path.join(dir, f'{self.name if name is None else name}{tag}.png')
         print(f'saving {fpath}')
         plt.savefig(fpath, dpi=dpi, transparent=True)
     def sample(self, fig, ax, thresh, sample=None):
         Q = np.vstack([sample.points.T, sample.function]).T if sample is not None else None
         P = get_sample(fig, ax, self.get_data(), thresh, Q)
         fdir = os.path.join(self.folder, 'samples')
-        fname = os.path.join(fdir, f'{self.name}-{len(P)}_{format_float(thresh)}.csv')
+        fname = os.path.join(fdir, f'{self.name}-sample{len(P)}_{format_float(thresh)}.csv')
         if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
             if not os.path.exists(fdir):
                 print(f'creating directory {fdir}')
@@ -155,11 +156,12 @@ class Sample:
         self.points = points
         self.function = function
     def get_levels(self, cuts, margin=0.5):
-        fmin = self.function.min()
-        fmax = self.function.max()
-        diff = fmax - fmin
-        levels = [fmin-diff*margin] + cuts + [fmax+diff*margin]
-        return [(a+b)/2 for a,b in zip(levels[:-1],levels[1:])]
+        # fmin = self.function.min()
+        # fmax = self.function.max()
+        # diff = fmax - fmin
+        # levels = [fmin-diff*margin] + cuts + [fmax+diff*margin]
+        # return [(a+b)/2 for a,b in zip(levels[:-1],levels[1:])]
+        return cuts
     def __getitem__(self, i):
         return self.points[i]
     def __call__(self, i):
@@ -208,10 +210,10 @@ class SampleData(Sample, DataFile):
             ax.add_patch(s)
         return balls
     def get_tag(self, args):
-        return f"""{self.name if self is None else ''}
-                {'-cover' if args.cover else '-union' if args.union else ''}
-                {'-color' if args.color else ''}
-                {'-nosurf' if args.nosurf else ''}"""
+        return  f"{self.name}"\
+                f"{'-cover' if args.cover else '-union' if args.union else ''}"\
+                f"{'-color' if args.color else ''}"\
+                f"{'-nosurf' if args.nosurf else ''}"
 
 # class SubsampleData(Sample, DataFile):
 #     def __init__(self, file_name, subsample_file, radius=None):

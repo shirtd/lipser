@@ -4,7 +4,7 @@ import numpy.linalg as la
 import numpy as np
 import os
 
-from lips.util import lmap
+from lips.util import lmap, format_float
 from contours import COLOR
 
 
@@ -55,7 +55,7 @@ def reset_plot(ax, scale=None, clear=True):
 #     plt.tight_layout()
 #     return fig, ax
 
-def init_surface(shape, extents, pad=1000, mult=8):
+def init_surface(shape, extents, pad=1000, mult=12):
     extents = [[a-pad,b+pad] for a,b in extents]
     dx = abs(extents[0][0] - extents[0][1])
     dy = abs(extents[1][0] - extents[1][1])
@@ -142,7 +142,7 @@ def plot_balls(ax, P, F, alpha=0.2, color=None, colors=None, zorder=None, zorder
 def plot_poly(ax, P, T, visible=True, color=None, color_list=None, **kwargs):
     if color_list is None:
         color_list = [color for _ in T]
-    tp = {t : plt.Polygon(P[t,:], color=c, **kwargs) for c,t in zip(color_list,T)}
+    tp = {t : plt.Polygon(P[t,:], facecolor=c, edgecolor='none', **kwargs) for c,t in zip(color_list,T)}
     lmap(lambda t: ax.add_patch(t), tp.values())
     if not visible:
         for t,p in tp.items():
@@ -159,10 +159,10 @@ def plot_edges(ax, P, E, visible=True, color=None, color_list=None, **kwargs):
     return ep
 
 def plot_rips(ax, complex, color=COLOR['red'], edge_color=COLOR['black'], visible=True, fade=[1, 0.3, 0.15], # [1, 0.6, 0.3],
-                                        dim=2, zorder=1, alpha=0.7, s=9, tri_colors=None, edge_colors=None):
+                                        dim=2, zorder=1, alpha=1, s=9, tri_colors=None, edge_colors=None, lw=0.1):
     edge_kw = {'color' : edge_color} if edge_colors is None else {'color_list' : edge_colors}
     tri_kw = {'color' : color} if tri_colors is None else {'color_list' : tri_colors}
-    return {1 : plot_edges(ax, complex.P, complex(1), visible, alpha=alpha*fade[1], zorder=zorder+1, lw=1, **edge_kw),
+    return {1 : plot_edges(ax, complex.P, complex(1), visible, alpha=alpha*fade[1], zorder=zorder+1, lw=lw, **edge_kw),
             2 : plot_poly(ax, complex.P, complex(2), visible, alpha=alpha*fade[2], zorder=zorder, **tri_kw)}
 
 def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300, hide={}):
@@ -181,7 +181,7 @@ def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True,
             plt.pause(wait)
         if save:
             # t_str = np.format_float_scientific(t, trim='-')
-            fname = os.path.join(dir, f'{name}{int(t*100)}.png')
+            fname = os.path.join(dir, f'{name}{format_float(t)}.png')
             print(f'saving {fname}')
             plt.savefig(fname, dpi=dpi, transparent=True)
     return rips_plt
