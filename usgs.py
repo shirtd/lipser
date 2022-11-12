@@ -14,6 +14,8 @@ DATA_DIR = os.path.join('data','rainier')
 # CUTS=[200, 1000, 1400, 1800, 2500, 4500]
 CUTS=[1850, 2130, 2585, 3180, 4175, 4500]
 
+print(f'CUTS: {CUTS}')
+
 parser = argparse.ArgumentParser(prog='rainier')
 
 parser.add_argument('file', help='surface file')
