@@ -3,11 +3,11 @@ import numpy as np
 import os, json
 
 from contours import COLOR
-from lips.util import lmap, format_float
 from lips.util.math import mk_gauss
-from contours.plot import get_sample, init_surface
 from lips.util.array import down_sample
-from lips.geometry.util import lipschitz_grid, coords_to_meters
+from lips.util import lmap, format_float
+from contours.plot import get_sample, init_surface
+from lips.geometry.util import lipschitz_grid, coords_to_meters, greedysample
 
 
 class DataFile:
@@ -59,8 +59,13 @@ class Surface:
         fpath = os.path.join(dir, f'{self.name if name is None else name}{tag}.png')
         print(f'saving {fpath}')
         plt.savefig(fpath, dpi=dpi, transparent=True)
-    def sample(self, fig, ax, thresh, sample=None):
-        Q = np.vstack([sample.points.T, sample.function]).T if sample is not None else None
+    def sample(self, fig, ax, thresh, min_cut=-np.inf, greedy=False, sample=None, mult=0.7):
+        if greedy:
+            Pidx = [i for i,f in enumerate(self.function) if f >= min_cut]
+            idx = greedysample(self.grid_points[Pidx], thresh*mult/2)
+            Q = np.vstack([self.grid_points[Pidx][idx].T, self.function[Pidx][idx]]).T
+        else:
+            Q = np.vstack([sample.points.T, sample.function]).T if sample is not None else None
         P = get_sample(fig, ax, self.get_data(), thresh, Q)
         fdir = os.path.join(self.folder, 'samples')
         fname = os.path.join(fdir, f'{self.name}-sample{len(P)}_{format_float(thresh)}.csv')
@@ -157,13 +162,7 @@ class Sample:
         self.points = points
         self.function = function
     def get_levels(self, cuts, margin=200):
-        # fmin = self.function.min()
-        # fmax = self.function.max()
-        # diff = fmax - fmin
-        # levels = [fmin-diff*margin] + cuts + [fmax+diff*margin]
-        # return [(a+b)/2 for a,b in zip(levels[:-1],levels[1:])]
         cuts = [int(a+(b-a)/2) for a,b in zip([cuts[0]-margin]+cuts, cuts+[cuts[-1]+margin])]
-        # print(cuts)
         return cuts
     def __getitem__(self, i):
         return self.points[i]
@@ -178,24 +177,6 @@ class Sample:
         p = ax.scatter(self.points[:,0], self.points[:,1], **kwargs)
         p.set_visible(visible)
         return p
-    # def subsample(self, fig, ax, thresh, sample=None, subsample=None):
-    #     surf.get_data(), args.thresh, _P, args.sub_file)
-    #     Q = np.vstack([sample.points.T, sample.function]).T if sample is not None else None
-    #     P = get_subsample(fig, ax, self.get_data(), thresh, Q)
-    #     ax, S, thresh, P, sub_file=None, color=COLOR['pink1']):
-    #     fdir = os.path.join(self.folder, 'samples')
-    #     fname = os.path.join(fdir, f'{self.name}-{len(P)}_{format_float(thresh)}.csv')
-    #     if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
-    #         if not os.path.exists(fdir):
-    #             print(f'creating directory {fdir}')
-    #             os.makedirs(fdir)
-    #         print('saving %s' % fname)
-    #         np.savetxt(fname, P)
-    #     # P = get_subsample(fig, ax, surf.get_data(), args.thresh, _P, args.sub_file)
-    #     # fname = os.path.join(args.data_dir, f'{sample.name}-subsample_{len(P)}.csv')
-    #     # if input('save %s (y/*)? ' % fname) in {'y','Y','yes'}:
-    #     #     print('saving %s' % fname)
-    #     #     np.savetxt(fname, P, fmt='%d')
 
 class SampleData(Sample, DataFile):
     def __init__(self, file_name, radius=None):
@@ -217,11 +198,3 @@ class SampleData(Sample, DataFile):
                 f"{'-cover' if args.cover else '-union' if args.union else ''}"\
                 f"{'-color' if args.color else ''}"\
                 f"{'-nosurf' if args.nosurf else ''}"
-
-# class SubsampleData(Sample, DataFile):
-#     def __init__(self, file_name, subsample_file, radius=None):
-#         DataFile.__init__(self, file_name)
-#         data = self.load()
-#         idx = list(np.loadtxt(subsample_file, dtype=int))
-#         Sample.__init__(self, data[idx,:2], data[idx,2])
-#         self.radius = float(self.name.split('_')[-1]) if radius is None else radius

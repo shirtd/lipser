@@ -8,7 +8,7 @@ from contours.plot import *
 
 from lips.topology.util import sfa_dio
 from lips.topology import RipsComplex, Filtration, Diagram
-from lips.geometry.util import lipschitz_grid
+from lips.geometry.util import lipschitz_grid, greedysample
 
 RES=8 # 16 # 32 #
 DSET='rainier_small' # 'rainier_sub' # 'northwest' #
@@ -49,7 +49,7 @@ parser.add_argument('--contours', action='store_true', help='plot contours')
 # PROGRAM ARGS
 parser.add_argument('--barcode', action='store_true', help='plot barcode')
 parser.add_argument('--sample', action='store_true', help='sample surface')
-parser.add_argument('--subsample', action='store_true', help='subsample surface')
+# parser.add_argument('--subsample', action='store_true', help='subsample surface')
 parser.add_argument('--thresh', type=float, default=None, help='cover radius')
 
 # RIPS
@@ -61,6 +61,7 @@ parser.add_argument('--coef', default=1.)#MULT*2/np.sqrt(3), type=float, help='r
 # LIPS
 parser.add_argument('--lips', action='store_true', help='run lips')
 parser.add_argument('--sfa', action='store_true', help='run sfa')
+parser.add_argument('--greedy', action='store_true', help='greedy sample')
 
 LW=0.3
 SIZE=1
@@ -83,9 +84,8 @@ if __name__ == '__main__':
                 'filt'      : { 'dir' : args.dir, 'save' : args.save,
                                 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
                 'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
-                                        'fade' : [1, 1, 0 if args.graph else 0.7], 'lw' : LW}},
+                                        'fade' : [1, 1, 0 if args.graph else 0.6], 'lw' : LW}},
                 'barcode'   : { 'lw' : 5}}
-
 
     surf = ScalarFieldData(args.file, args.json)
     if args.sample_file is not None:
@@ -95,8 +95,6 @@ if __name__ == '__main__':
             args.thresh = sample.radius
     else:
         sample = None
-    # if args.subsample_file is not None:
-    #     subsample = SubsampleData(args.subsample_file, sample, args.thresh)
 
     if args.contours:
         surf_plt = surf.plot_contours(args.show, args.save, args.dir, args.dpi)
@@ -106,9 +104,7 @@ if __name__ == '__main__':
         surf_plt = surf.plot(ax, **kwargs['surf'])
 
     if args.sample:
-        surf.sample(fig, ax, args.thresh, sample)
-    # if args.subsample:
-    #     sample.subsample(fig, ax, args.thresh, subsample)
+        surf.sample(fig, ax, args.thresh, surf.cuts[0], args.greedy, sample)
     elif args.sample_file is not None:
         sample_plt = sample.plot(ax, **kwargs['sample'])
         if args.cover or args.union:
@@ -120,19 +116,11 @@ if __name__ == '__main__':
             cover_plt = sample.plot_cover(ax, **kwargs['cover'])
 
         if args.rips or args.graph:
-            # name = f'{name}_rips' if args.rips else f'{name}_graph'
-            # if args.graph:
-            #     surf_plt = surf.plot(ax, CFG['cuts'], COLORS, **kwargs['surf'])
             rips = RipsComplex(sample.points, sample.radius*args.coef, verbose=True)
             rips.sublevels(sample)
             if args.color:
-                # name += '_color'
                 del kwargs['rips']['f']['color']
                 kwargs['rips']['f']['tri_colors'] = [get_color(sample(t).max(), surf.cuts, surf.colors) for t in rips(2)]
-            # rips_plt = plot_rips_filtration(ax, rips, levels, kwargs['rips'], sample.name, dir=os.path.join() : args.dir, 'save' : args.save,
-            # keys=kwargs['rips']
-
-            # def plot_rips_filtration(ax, rips, levels, keys, name, dir='figures', save=True, wait=0.5, dpi=300, hide={}):
             print(' plotting rips...')
             rips_plt = {k : plot_rips(ax, rips, **v) for k,v in kwargs['rips'].items()}
             print('\tdone')
@@ -147,13 +135,6 @@ if __name__ == '__main__':
                 if args.save:
                     sample_str = '' if args.sample_file is None else sample.get_tag(args)
                     surf.save_plot(args.dir, dpi=args.dpi, name=sample_str, tag=format_float(t))
-                # if save:
-                #     # t_str = np.format_float_scientific(t, trim='-')
-                #     fname = os.path.join(dir, f'{name}{format_float(t)}.png')
-                #     print(f'saving {fname}')
-                #     plt.savefig(fname, dpi=dpi, transparent=True)
-                # return rips_plt
-            #                 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},**kwargs['filt'])
         elif args.sfa:
             name = f'{surf.name}_offset'
             if args.color:

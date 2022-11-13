@@ -1,20 +1,33 @@
 from itertools import combinations, product, permutations
+from scipy.spatial.distance import cdist
 import numpy.linalg as la
 from tqdm import tqdm
 import numpy as np
 
 from lips.util.math import ripple
-# from lips import util
 
 
-# import dionysus as dio
-#
-# def rips(P, thresh, dim=2):
-#     K = {d : [] for d in range(dim+1)}
-#     S = dio.fill_rips(P, dim, thresh)
-#     for s in S:
-#         K[s.dimension()].append(stuple(s))
-#     return K
+def greedy(P, distance='euclidean'):
+    S = cdist(P, P, distance)
+    D = S[0]
+    j = 0
+    for _ in P:
+        yield j
+        j = D.argmax()
+        D = np.minimum(S[j], D)
+
+
+def greedysample(P, delta, distance='euclidean'):
+    S = cdist(P, P, distance)
+    D = S[0]
+    j = 0
+    output = []
+    for _ in P:
+        output.append(j)
+        j = D.argmax()
+        if D[j] < delta:
+            return output
+        D = np.minimum(S[j], D)
 
 def get_delta(n, w=1, h=1):
     return 2 / (n-1) * np.sqrt(w ** 2 + h ** 2)
@@ -105,37 +118,3 @@ def edge_circumradius(E):
     if E.ndim > 2:
         return la.norm(E.T[:,0] - E.T[:,1], axis=0) / 2
     return la.norm(diff(E)) / 2
-    # return la.norm(util.diff(E)) / 2
-
-# def torus(r1=0.5, r2=1, n=64):
-#     r1, r2 = 0.5, 1
-#     phi, theta = np.linspace(-np.pi, np.pi, n), np.linspace(-np.pi, np.pi, n)
-#     x = (r1 * np.cos(phi) + r2) * np.cos(theta)
-#     y = (r1 * np.cos(phi) + r2) * np.sin(theta)
-#     z = r1 * np.sin(phi)
-#     return np.vstack((x,y,z)).T
-#
-# def ripple(x, y, f=1, l=1, w=1):
-#     t = la.norm(np.stack((x, y), axis=2), axis=2) + 1/12
-#     t[t > 1] = 1.
-#     return (1 - t) - np.exp(-t / l) * np.cos(2*np.pi*f*(1-t) * np.sin(2*np.pi*w*t))
-
-
-# def tri_circumcenter(T):
-#     ca, ba = T[2] - T[0], T[1] - T[0]
-#     xca = la.norm(ca) ** 2 * np.cross(np.cross(ba, ca), ba)
-#     xba = la.norm(ba) ** 2 * np.cross(np.cross(ca, ba), ca)
-#     return T[0] + (xca + xba) / (2 * la.norm(np.cross(ba, ca)) ** 2)
-#
-# def tet_circumcenter(T):
-#     alpha = np.array([[a[0], a[1], a[2], 1] for a in T])
-#     Dx = np.array([[a[0]*a[0] + a[1]*a[1] + a[2]*a[2], a[1], a[2], 1] for a in T])
-#     Dy = np.array([[a[0]*a[0] + a[1]*a[1] + a[2]*a[2], a[0], a[2], 1] for a in T])
-#     Dz = np.array([[a[0]*a[0] + a[1]*a[1] + a[2]*a[2], a[0], a[1], 1] for a in T])
-#     return np.array([la.det(Dx), -1*la.det(Dy), la.det(Dz)]) / (2 * la.det(alpha))
-#
-# def tri_circumradius_l(a, b, c):
-#     return a*b*c / np.sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
-#
-# def tri_circumradius(T):
-#     return tri_circumradius_l(*map(la.norm, map(diff, combinations(T, 2))))

@@ -14,8 +14,6 @@ DATA_DIR = os.path.join('data','rainier')
 # CUTS=[200, 1000, 1400, 1800, 2500, 4500]
 CUTS=[1850, 2130, 2585, 3180, 4175, 4500]
 
-print(f'CUTS: {CUTS}')
-
 parser = argparse.ArgumentParser(prog='rainier')
 
 parser.add_argument('file', help='surface file')
@@ -33,6 +31,8 @@ parser.add_argument('--save', action='store_true')
 if __name__ == '__main__':
     args = parser.parse_args()
     args.colors = [COLOR[c] for c in args.colors]
+
+    print(f'CUTS: {args.cuts}')
 
     surf = USGSScalarField(args.file, args.dir, args.name, args.downsample)
 
