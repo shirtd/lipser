@@ -38,7 +38,7 @@ def lipschitz(F, P):
 def lipschitz_grid(F, G):
     def c(i,j,a,b):
         return abs(F[i,j] - F[i+a,j+b]) / la.norm(G[:,i,j] - G[:,i+a,j+b])
-    it = tqdm(list(product(range(1, F.shape[0]-1), range(1, F.shape[1]-1))))
+    it = tqdm(list(product(range(1, F.shape[0]-1), range(1, F.shape[1]-1))), desc='lips')
     return max(c(i,j,a,b) for i,j in it for a,b in permutations([-1,0,1],2))
 
 def coords_to_meters(lon1, lat1, lon2, lat2, R=6378.137):

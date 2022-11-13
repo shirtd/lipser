@@ -2,106 +2,151 @@ import numpy as np
 import argparse
 import os, sys
 
-from lips.topology.util import sfa_dio
-from lips.topology import RipsComplex, Filtration, Diagram
 from contours import CONFIG, COLOR
 from contours.surface import *
+from contours.sample import *
 from contours.plot import *
 
+from lips.topology.util import sfa_dio
+from lips.topology import RipsComplex, Filtration, Diagram
+from lips.geometry.util import lipschitz_grid, greedysample
 
-parser = argparse.ArgumentParser(prog='lips')
+RES=8 # 16 # 32 #
+DSET='rainier_small' # 'rainier_sub' # 'northwest' #
+DIR=os.path.join('data')
+DDIR=os.path.join(DIR, DSET)
+SAMPLE='rainier_small8-sample666_1000.csv'
 
-parser.add_argument('--file', default='data/surf32.csv', help='surface file')
-parser.add_argument('--sample-file', default='data/surf32-sample-1233_1.3e-01.csv', help='sample file')
-parser.add_argument('--mult', type=float, default=1., help='thresh mult')
-parser.add_argument('--show', action='store_true', help='show plot')
-parser.add_argument('--wait', type=float, default=0.5, help='wait')
-parser.add_argument('--save', action='store_true', help='save')
-parser.add_argument('--dpi', type=int, default=300, help='dpi')
+FILE=os.path.join(DDIR, f'{DSET}{RES}.csv') # None #
+# JSON= None # os.path.join(DDIR, f'{DSET}{RES}.json')
+SAMPLE_FILE=None # os.path.join(DDIR, 'samples', SAMPLE) #
+SUB_FILE= None
+
+MULT=1. # 4/3
+
+parser = argparse.ArgumentParser(prog='surf')
+
+parser.add_argument('surf', default=None, nargs='*', type=str, help='surface specification')
+parser.add_argument('--data-dir', default='data', help='data directory')
+parser.add_argument('--file', default=FILE, help='surface file')
+parser.add_argument('--json', default=None, help='surface config')
+
+parser.add_argument('--sample-file', default=SAMPLE_FILE, help='sample file')
+parser.add_argument('--sub-file', default=SUB_FILE, help='subsample file')
 parser.add_argument('--tag', default='', help='file tag')
-parser.add_argument('--dir', default='figures', help='dir')
-parser.add_argument('--rips', action='store_true', help='run rips')
-parser.add_argument('--union', action='store_true', help='run offset union')
-parser.add_argument('--barcode', action='store_true', help='run barcode')
-parser.add_argument('--color', action='store_true', help='color complex by function values')
-parser.add_argument('--noim', action='store_true', help='don\'t do image persistence')
-parser.add_argument('--graph', action='store_true', help='just plot graph')
-parser.add_argument('--coef', default=2/np.sqrt(3), type=float, help='rips coef')
 
+parser.add_argument('--show', action='store_true', help='show plot')
+parser.add_argument('--save', action='store_true', help='save plot')
+parser.add_argument('--dir', default=os.path.join('figures','surf'), help='figure output directory')
+parser.add_argument('--dpi', type=int, default=300, help='image dpi')
+
+# VISUALIZATION ARGS
+parser.add_argument('--surf', action='store_true', help='plot surf')
+parser.add_argument('--color', action='store_true', help='color plot')
+parser.add_argument('--cover', action='store_true', help='plot cover')
+parser.add_argument('--union', action='store_true', help='plot union of cover')
+parser.add_argument('--contours', action='store_true', help='plot contours')
+
+# PROGRAM ARGS
+parser.add_argument('--barcode', action='store_true', help='plot barcode')
+parser.add_argument('--sample', action='store_true', help='sample surface')
+# parser.add_argument('--subsample', action='store_true', help='subsample surface')
+parser.add_argument('--thresh', type=float, default=None, help='cover radius')
+
+# RIPS
+parser.add_argument('--wait', type=float, default=0.5, help='wait')
+parser.add_argument('--rips', action='store_true', help='run rips')
+parser.add_argument('--graph', action='store_true', help='just plot graph')
+parser.add_argument('--coef', default=1.)#MULT*2/np.sqrt(3), type=float, help='rips coef')
+
+# LIPS
+parser.add_argument('--lips', action='store_true', help='run lips')
+parser.add_argument('--sfa', action='store_true', help='run sfa')
+parser.add_argument('--greedy', action='store_true', help='greedy sample')
+
+LW=0.3
+SIZE=1
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    CFG = CONFIG[os.path.splitext(os.path.basename(args.file))[0]]
-    COLORS = [COLOR[c] for c in CFG['colors']]
-    grid = make_grid(CFG['res'], CFG['shape'])
-    surf = ScalarFieldData(args.file, grid, CFG['lips'])
-    args.dir = os.path.join(args.dir, surf.name, 'rips')
+    if len(args.surf):
+        args.file = os.path.join(args.data_dir, args.surf[0], f"{''.join(args.surf)}.csv")
+    if args.json is None:
+        args.json = f'{os.path.splitext(args.file)[0]}.json'
 
     kwargs = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
-                'filt'      : { 'dir' : args.dir, 'save' : args.save, 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
-                'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : 5, 'color' : 'black'},
-                'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.5, 0 if args.graph else 0.15]}},
+                'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : SIZE, 'color' : 'black'},
+                'cover'     : { 'visible' : True, 'zorder' : 2, 'alpha' : 1 if args.union else 0.2,
+                                'color' : COLOR['red1'] if args.union else COLOR['red']},
                 'offset'    : { 'visible' : False, 'zorder' : 2,
                                 'color' : COLOR['red1'] if args.union else COLOR['red'],
-                                'alpha' : 1 if args.union else 0.1},
-                'barcode'   : { 'cuts' : CFG['cuts'], 'colors' : [COLOR[c] for c in CFG['colors']]}}
+                                'alpha' : 1 if args.union else 0.3},
+                'filt'      : { 'dir' : args.dir, 'save' : args.save,
+                                'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
+                'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
+                                        'fade' : [1, 0.8, 0 if args.graph else 0.6], 'lw' : LW}},
+                'barcode'   : { 'lw' : 5}}
 
-    sample = SampleData(args.sample_file)
-    levels = sample.get_levels(CFG['cuts'])
+    surf = ScalarFieldData(args.file, args.json)
+    sample = SampleData(args.sample_file, args.thresh)
+    levels = sample.get_levels(surf.cuts)
+    if args.thresh is None:
+        args.thresh = sample.radius
 
-    union_str = '-union' if args.union else ''
-    name = f'{sample.name}_rips{union_str}'
+    fig, ax = init_surface(surf.shape, surf.extents, surf.pad)
+    if args.surf:
+        surf_plt = surf.plot(ax, **kwargs['surf'])
+
+
+    sample_plt = sample.plot(ax, **kwargs['sample'])
+    if args.cover or args.union:
+        if args.color:
+            del kwargs['cover']['color']
+            kwargs['cover']['colors'] = [get_color(f, surf.cuts, surf.colors) for f in sample.function]
+            kwargs['cover']['zorders'] = [get_cut(f, surf.cuts, kwargs['cover']['zorder']+1) for f in sample.function]
+            del kwargs['cover']['zorder']
+        cover_plt = sample.plot_cover(ax, **kwargs['cover'])
+
+    if args.rips or args.graph:
+        rips = RipsComplex(sample.points, sample.radius*args.coef, verbose=True)
+        rips.sublevels(sample)
+        if args.color:
+            del kwargs['rips']['f']['color']
+            kwargs['rips']['f']['tri_colors'] = [get_color(sample(t).max(), surf.cuts, surf.colors) for t in rips(2)]
+        print(' plotting rips...')
+        rips_plt = {k : plot_rips(ax, rips, **v) for k,v in kwargs['rips'].items()}
+        print('\tdone')
+        for i, t in enumerate(levels):
+            for d in (1,2):
+                for s in rips(d):
+                    for k,v in rips_plt.items():
+                        if s.data[k] <= t:
+                            rips_plt[k][d][s].set_visible(not kwargs['rips'][k]['visible'])
+            if args.show and args.wait is not None:
+                plt.pause(args.wait)
+            if args.save:
+                sample_str = '' if args.sample_file is None else sample.get_tag(args)
+                surf.save_plot(args.dir, dpi=args.dpi, name=sample_str, tag=format_float(t))
+    elif args.sfa:
+        name = f'{surf.name}_offset'
+        if args.color:
+            del kwargs['offset']['color']
+            kwargs['offset']['colors'] = [get_color(f, surf.cuts, surf.colors) for f in sample.function]
+            kwargs['offset']['zorders'] = [get_cut(f, surf.cuts, kwargs['offset']['zorder']+1) for f in sample.function]
+            del kwargs['offset']['zorder']
+        offset_plt = plot_sfa(ax, sample, levels, kwargs['offset'], name, **kwargs['filt'])
+
+    if args.save:
+        sample_str = surf.name if args.sample_file is None else sample.get_tag(args)
+        surf.save_plot(args.dir, dpi=args.dpi, name=sample_str)
 
     if args.barcode:
-        fig, ax = init_barcode()
-        grid = make_grid(CFG['res'], CFG['shape'])
-        surf = ScalarFieldData(args.file, grid)
-
-        rips = RipsComplex(sample.points, sample.radius * args.mult * (1 if args.noim else args.coef))
-        rips.sublevels(sample)
-        filt = Filtration(rips, 'f')
-        pivot = filt if args.noim else Filtration(rips, 'f', filter=lambda s: s['dist'] <= sample.radius * args.mult)
-        hom =  Diagram(rips, filt, pivot=pivot, verbose=True)
-
-        sample_dgms = hom.get_diagram(rips, filt, pivot)
+        bar_fig, bar_ax = init_barcode()
         surf_dgms = sfa_dio(surf.surface)
-
-        plot_barcode(ax[0], sample_dgms[1], **kwargs['barcode'], lw=CFG['lw'])
-        plot_barcode(ax[1], surf_dgms[1], **kwargs['barcode'], lw=CFG['lw'])
-
+        barcode_plt = plot_barcode(bar_ax, surf_dgms[1], surf.cuts, surf.colors, **kwargs['barcode'])
         if args.save:
-            if not os.path.exists(args.dir):
-                print(f'making directory {args.dir}')
-                os.makedirs(args.dir)
-            im_str = '-noim' if args.noim else ''
-            fpath = os.path.join(args.dir, f'{name}_barcode{im_str}.png')
-            print(f'saving {fpath}')
-            plt.savefig(fpath, dpi=args.dpi, transparent=True)
-        if args.show:
-            plt.show()
-    else:
-        if args.show:
-            plt.ion()
-        fig, ax = init_surface(CFG['shape'], CFG['pad'], 10)
-        sample_plt = plot_points(ax, sample, **kwargs['sample'])
+            surf.save_plot(args.dir, 'barcode')
 
-        if args.rips or args.graph:
-            name = f'{name}_rips' if args.rips else f'{name}_graph'
-            # if args.graph:
-            #     surf_plt = surf.plot(ax, CFG['cuts'], COLORS, **kwargs['surf'])
-            rips = RipsComplex(sample.points, sample.radius * args.mult)
-            rips.sublevels(sample)
-            if args.color:
-                name += '_color'
-                del kwargs['rips']['f']['color']
-                kwargs['rips']['f']['tri_colors'] = [get_color(sample(t).max(), CFG['cuts'], [COLOR[c] for c in CFG['colors']]) for t in rips(2)]
-            rips_plt = plot_rips_filtration(ax, rips, levels, kwargs['rips'], name, **kwargs['filt'])
-        else:
-            name = f'{name}_offset'
-            if args.color:
-                del kwargs['offset']['color']
-                kwargs['offset']['colors'] = [get_color(f, CFG['cuts'], [COLOR[c] for c in CFG['colors']]) for f in sample.function]
-                kwargs['offset']['zorders'] = [get_cut(f, CFG['cuts'], kwargs['offset']['zorder']+1) for f in sample.function]
-                del kwargs['offset']['zorder']
-            offset_plt = plot_sfa(ax, sample, levels, kwargs['offset'], name, **kwargs['filt'])
+    if args.show:
+        plt.show()
