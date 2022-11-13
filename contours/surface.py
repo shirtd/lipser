@@ -59,7 +59,7 @@ class Surface:
         fpath = os.path.join(dir, f'{self.name if name is None else name}{tag}.png')
         print(f'saving {fpath}')
         plt.savefig(fpath, dpi=dpi, transparent=True)
-    def sample(self, fig, ax, thresh, min_cut=-np.inf, greedy=False, sample=None, mult=0.7):
+    def sample(self, fig, ax, thresh, min_cut=-np.inf, greedy=False, sample=None, mult=0.5):
         if greedy:
             Pidx = [i for i,f in enumerate(self.function) if f >= min_cut]
             idx = greedysample(self.grid_points[Pidx], thresh*mult/2)
@@ -162,8 +162,8 @@ class Sample:
         self.points = points
         self.function = function
     def get_levels(self, cuts, margin=200):
-        cuts = [int(a+(b-a)/2) for a,b in zip([cuts[0]-margin]+cuts, cuts+[cuts[-1]+margin])]
-        return cuts
+        _cuts = [int(a+(b-a)/2) for a,b in zip([cuts[0]-margin]+cuts, cuts+[cuts[-1]+margin])]
+        return [x for t in zip(_cuts,cuts) for x in t]
     def __getitem__(self, i):
         return self.points[i]
     def __call__(self, i):

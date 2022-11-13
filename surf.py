@@ -84,7 +84,7 @@ if __name__ == '__main__':
                 'filt'      : { 'dir' : args.dir, 'save' : args.save,
                                 'wait' : args.wait if args.show else None, 'dpi' : args.dpi},
                 'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
-                                        'fade' : [1, 1, 0 if args.graph else 0.6], 'lw' : LW}},
+                                        'fade' : [1, 0.8, 0 if args.graph else 0.6], 'lw' : LW}},
                 'barcode'   : { 'lw' : 5}}
 
     surf = ScalarFieldData(args.file, args.json)

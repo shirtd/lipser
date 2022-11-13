@@ -2,6 +2,7 @@
 
 ## TODO
 
+ - sample and keep going; no need to reload before rendering
  - subsample
    - no need to subsample, just provide two samples
      - take the functions from one and the geometry from the other
