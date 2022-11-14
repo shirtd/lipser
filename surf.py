@@ -57,6 +57,7 @@ if __name__ == '__main__':
     fig, ax = surf.init_plot()
     surf_plt = surf.plot(ax, **KWARGS['surf'])
 
+    # TODO
     # still need to refactor Sample as a subclass of Data/DataFile
     # need to pass json to sample!
     # if args.sample:
@@ -72,6 +73,7 @@ if __name__ == '__main__':
         name = surf.name if args.sample_file is None else sample.get_tag(args)
         surf.save_plot(name, args.folder, args.dpi)
 
+    # TODO
     # surf.barcode(bar_ax, surf_dgms[1], **kwargs['barcode'])
     # if args.barcode:
     #     bar_fig, bar_ax = init_barcode()

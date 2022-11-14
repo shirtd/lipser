@@ -7,11 +7,11 @@ from contours import COLOR, KWARGS
 from contours.surface import USGSScalarField
 
 
-DATA_DIR = os.path.join('data','rainier')
-CUTS=[200, 1000, 1400, 1800, 2500, 4500] # [1850, 2130, 2585, 3180, 4175, 4500]
+DATA_DIR = os.path.join('data','test')
+CUTS=[200, 1000, 1400, 1800, 2500, 4500]
 COLORS=[COLOR[c] for c in ['blue','green','yellow','salmon','purple']]
 
-parser = argparse.ArgumentParser(prog='rainier')
+parser = argparse.ArgumentParser(prog='parse')
 
 parser.add_argument('file', help='surface file')
 parser.add_argument('--downsample', default=None, type=int, help='downsample')

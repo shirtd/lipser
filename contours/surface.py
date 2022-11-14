@@ -3,9 +3,17 @@ import numpy as np
 import os
 
 from contours.data import Data, DataFile
-from contours.plot import get_sample, init_surface
+from contours.plot import get_sample, init_surface, init_barcode
 from lips.util import mk_gauss, down_sample, lmap, format_float
 from lips.geometry.util import lipschitz_grid, coords_to_meters, greedysample
+
+
+class _Surface:
+    def __init__(self, surface, grid):
+        self.surface, self.grid, self.shape = surface, grid, surface.shape
+        # self.points = np.vstack(lmap(lambda x: x.flatten(), grid)).T
+    def __getitem__(self, c):
+        return self.surface[c]
 
 
 class Surface:
@@ -20,22 +28,6 @@ class Surface:
     def plot(self, ax, zorder=0, **kwargs):
         return {'surface' : ax.contourf(*self.grid, self.surface, levels=self.cuts, colors=self.colors, zorder=zorder, **kwargs),
                 'contours' : ax.contour(*self.grid, self.surface, levels=self.cuts[1:], colors=self.colors[1:], zorder=zorder+1)}
-    def plot_contours(self, show=True, save=False, folder='figures', dpi=300, pad=0, off_alpha=0.1):
-        fig, ax = self.init_plot()
-        surf_plt = self.plot(ax)
-        surf_alpha = [off_alpha for _ in self.colors]
-        cont_alpha = surf_alpha.copy()
-        surf_plt['surface'].set_alpha(surf_alpha)
-        surf_plt['contours'].set_alpha(cont_alpha)
-        if show: plt.pause(0.5)
-        if save: self.save_plot(folder, format_float(self.cuts[0]), dpi)
-        for i, t in enumerate(self.cuts[:-1]):
-            cont_alpha[i], surf_alpha[i] = 1., 0.5
-            surf_plt['contours'].set_alpha(cont_alpha)
-            surf_plt['surface'].set_alpha(surf_alpha)
-            if show: plt.pause(0.5)
-            if save: self.save_plot(folder, format_float(t), dpi)
-        plt.close(fig)
     def save_plot(self, name, folder='./', dpi=300, tag=None, sep='_'):
         tag = '' if (tag is None or not len(tag)) else sep+tag
         folder = os.path.join(folder, name)
@@ -45,6 +37,15 @@ class Surface:
         file_name = os.path.join(folder, f'{name}{tag}.png')
         print(f'saving {file_name}')
         plt.savefig(file_name, dpi=dpi, transparent=True)
+    #
+    # TODO
+    # def plot_barcode(self, ax, name, folder='./', dpi=300, tag=None, sep='_', **kwargs):
+    #     fig, ax = init_barcode()
+    #     surf_dgms = sfa_dio(self.surface)
+    #     barcode_plt = plot_barcode(ax, surf_dgms[1], self.cuts, self.colors, *args, **kwargs)
+    #     if args.save:
+    #         surf.save_plot(name, folder, dpi, 'barcode', sep)
+    #
     # update to create a sample object, save using sample object method
     # def sample(self, name, folder, thresh, min_cut=-np.inf, greedy=False, sample=None, mult=0.5):
     #     fig, ax = self.init_plot()
@@ -121,6 +122,19 @@ class ScalarFieldData(ScalarField, DataFile):
             json_file = f'{os.path.splitext(file_name)[0]}.json'
         DataFile.__init__(self, file_name, json_file)
         ScalarField.__init__(self, self.load_data(), **self.config)
-    # TODO
-    # def plot_barcode(self, ax, *args, **kwargs):
-    #     return ScalarField.plot_barcode(self, ax, self.cuts, self.colors, *args, **kwargs)
+    def plot_contours(self, show=True, save=False, folder='figures', dpi=300, pad=0, off_alpha=0.1):
+        fig, ax = self.init_plot()
+        surf_plt = self.plot(ax)
+        surf_alpha = [off_alpha for _ in self.colors]
+        cont_alpha = surf_alpha.copy()
+        surf_plt['surface'].set_alpha(surf_alpha)
+        surf_plt['contours'].set_alpha(cont_alpha)
+        if show: plt.pause(0.5)
+        if save: self.save_plot(self.name, folder, dpi, format_float(self.cuts[0]))
+        for i, t in enumerate(self.cuts[:-1]):
+            cont_alpha[i], surf_alpha[i] = 1., 0.5
+            surf_plt['contours'].set_alpha(cont_alpha)
+            surf_plt['surface'].set_alpha(surf_alpha)
+            if show: plt.pause(0.5)
+            if save: self.save_plot(self.name, folder, dpi, format_float(t))
+        plt.close(fig)
