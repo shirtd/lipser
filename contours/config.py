@@ -1,9 +1,21 @@
 import numpy as np
 
+from contours.style import COLOR
 
+
+LW=0.3
+SIZE=1
 
 KWARGS = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
-            'barcode'   : { 'lw' : 5}}
+            'barcode'   : { 'lw' : 5},
+            'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : SIZE, 'color' : 'black'},
+            'offset'    : { 'visible' : True, 'zorder' : 2, 'alpha' : 0.3, 'color' : COLOR['red']},
+            'cover'     : { 'visible' : True, 'zorder' : 2, 'alpha' : 0.3, 'color' : COLOR['red']},
+            'union'     : { 'visible' : True, 'zorder' : 2, 'alpha' : 1, 'color' : COLOR['red1']},
+            'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
+                                    'fade' : [1, 0.8, 0.6], 'lw' : LW}},
+            'graph'     : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
+                                    'fade' : [1, 0.8, 0], 'lw' : LW}}}
 
 # CONFIG = {  'surf32' :    {'res' : 32, 'shape' : (2,1), 'pad' : (1.2, 1.55),
 #                         'cuts' : [0.05, 0.3, 0.55, 0.8, 1.35],

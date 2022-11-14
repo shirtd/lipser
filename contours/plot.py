@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 from lips.util import lmap, format_float
-from contours import COLOR
+from contours.style import COLOR
 
 
 def init_barcode(figsize=(12,7), hide_ticks=False, ylim=None):

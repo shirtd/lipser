@@ -64,8 +64,6 @@ parser.add_argument('--lips', action='store_true', help='run lips')
 parser.add_argument('--sfa', action='store_true', help='run sfa')
 parser.add_argument('--greedy', action='store_true', help='greedy sample')
 
-LW=0.3
-SIZE=1
 
 if __name__ == '__main__':
     args = parser.parse_args()

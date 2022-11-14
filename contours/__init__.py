@@ -1,2 +1,2 @@
-from contours.config import *
-from contours.style import *
+# from contours.config import KWARGS, LW, SIZE
+# from contours.style import COLOR, COLORS
