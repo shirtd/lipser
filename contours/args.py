@@ -18,7 +18,8 @@ from contours.style import COLOR, COLORS
 # MULT=1. # 4/3
 
 DATA_DIR = os.path.join('data','test')
-CUTS=[200, 1000, 1400, 1800, 2500, 4500]
+# CUTS=[200, 1000, 1400, 1800, 2500, 4500]
+CUTS=[1850, 2130, 2585, 3180, 4175, 4500]
 FDIR='figures'
 DPI=300
 PAD=1e-1
@@ -33,6 +34,7 @@ parser.add_argument('--tag', default='', help='file tag')
 parser.add_argument('--downsample', default=None, type=int, help='downsample')
 
 parser.add_argument('--barcode', action='store_true')
+parser.add_argument('--relative', action='store_true')
 parser.add_argument('--show', action='store_true')
 parser.add_argument('--save', action='store_true')
 parser.add_argument('--dir', default=FDIR, help='figure output directory')
@@ -59,3 +61,8 @@ parser.add_argument('--sample-file', default=None, help='sample file')
 # parser.add_argument('--save', action='store_true', help='save plot')
 
 parser.add_argument('--contours', action='store_true', help='plot contours')
+parser.add_argument('--cover', action='store_true', help='plot cover')
+parser.add_argument('--color', action='store_true', help='plot color')
+parser.add_argument('--union', action='store_true', help='plot union')
+parser.add_argument('--surf', action='store_true', help='plot surf')
+parser.add_argument('--rips', action='store_true', help='plot surf')

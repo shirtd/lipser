@@ -58,8 +58,8 @@ class Data:
 class DataFile(Data):
     def __init__(self, file_name, json_file=None):
         self.path, self.file = file_name, os.path.basename(file_name)
-        self.json_file = f'{os.path.join(folder, name)}.json' if json_file is None else json_file
         folder, name = (os.path.dirname(file_name), os.path.splitext(self.file)[0])
+        self.json_file = f'{os.path.join(folder, name)}.json' if json_file is None else json_file
         Data.__init__(self, name, folder, self.load_json())
     def load_data(self):
         print(f'loading {self.path}')

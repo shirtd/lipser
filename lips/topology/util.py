@@ -37,9 +37,19 @@ def to_path(vertices, nbrs):
             cur = path[-1]
     return path
 
-def sfa_dio(f, inf=-0.1):
+def sfa_dio(f, min_cut=None, inf=-0.1, relative=False):
     filt = dio.fill_freudenthal(f)
-    hom = dio.homology_persistence(filt)
+    def _filter(s):
+        if s.dimension() == 0:
+            return s.data > min_cut
+        return min(f.flatten()[i] for i in s) > min_cut
+    if min_cut is None:
+        hom = dio.homology_persistence(filt)
+    elif relative:
+        rel = dio.Filtration([s for s in filt if s.data <= min_cut])
+    else:
+        filt = dio.Filtration([s for s in filt if _filter(s)])
+        hom = dio.homology_persistence(filt)
     dgms = dio.init_diagrams(hom, filt)
     return [np.array([[p.birth, p.death if p.death < np.inf else inf] for p in d]) if len(d) else np.ndarray((0,2)) for d in dgms]
 

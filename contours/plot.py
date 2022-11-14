@@ -61,11 +61,11 @@ def init_surface(shape, extents, pad=1000, mult=12):
     dy = abs(extents[1][0] - extents[1][1])
     fig, ax = get_fig((1, dy/dx), mult)
     # fig, ax = plt.subplots()
-    ax.set_xlim(*extents[0])
-    ax.set_ylim(*extents[1])
     ax.invert_yaxis()
     ax.axis('off')
     ax.axis('scaled')
+    ax.set_xlim(*extents[0])
+    ax.set_ylim(*extents[1])
     plt.tight_layout()
     return fig, ax
 
@@ -247,7 +247,7 @@ def get_sample(fig, ax, S, thresh, P=None, color=COLOR['pink1']):
     plt.show()
     fig.canvas.mpl_disconnect(cid)
     P = sorted(P, key=lambda x: x[1])
-    return np.vstack(P)
+    return np.vstack(P) if len(P) else None
 
 def get_subsample(fig, ax, S, thresh, P, sub_file=None, color=COLOR['pink1']):
     cover_plt = plot_balls(ax, P, np.ones(len(P))*thresh/2, alpha=0.5, color='gray', zorder=2)
