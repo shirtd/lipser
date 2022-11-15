@@ -70,6 +70,7 @@ def init_surface(extents, pad=1000, mult=12):
     return fig, ax
 
 def plot_barcode(ax, dgm, cuts, colors, lw=5, thresh=0, *args, **kwargs):
+    ax.set_xlim(cuts[0], cuts[-1])
     dgm = np.array([p for p in dgm if p[1]-p[0] > thresh and p[1] != np.inf])
     if not len(dgm):
         return None

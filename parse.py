@@ -12,7 +12,7 @@ from contours.config import COLOR, KWARGS
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    surf = USGSScalarFieldData(args.file, args.cuts, args.colors, args.pad, args.lips, args.downsample)
+    surf = USGSScalarFieldData(args.file, args.cuts, args.colors, args.pad, args.downsample)
 
     if args.show:
         fig, ax = surf.init_plot()

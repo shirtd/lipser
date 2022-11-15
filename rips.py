@@ -16,49 +16,70 @@ if __name__ == '__main__':
     color_str = '-color' if args.color else ''
 
     # surf = ScalarFieldData(args.file, args.json)
-    sample = MetricSampleFile(args.file) #, surf.json_file, args.thresh)
+    sample = MetricSampleFile(args.file)
     args.folder = os.path.join(args.folder, sample.parent, sample.name)
 
-    # TODO
-    # if args.barcode:
-    #     surf_dgms = surf.plot_barcode(args.folder, args.save, args.show, args.dpi, **KWARGS['barcode'])
-    #
-    # TODO pass a plot object
-    # if args.contours:
-    #     if args.cover:
-    #         sample.plot_contours(args.show, args.save, args.folder, args.dpi)
-    #     elif args.union:
-    #         # TODO
-    #     elif args.rips:
-    #         # TODO
+    if args.sub_file is not None:
+        subsample = MetricSampleFile(args.sub_file)
+
+    if args.cover or args.union:
+        key = 'cover' if args.cover else 'union'
+    elif args.rips or args.graph:
+        key = 'rips' if args.rips else 'graph'
+        rips = RipsComplex(sample.points, sample.radius, verbose=True)
+
+    if args.contours:
+        tag = f'{key}{color_str}'
+        if args.lips:
+            tag = f"lips-{tag}{'-max' if args.nomin else '-min' if args.nomax else ''}"
+        plot_args = [args.show, args.save, args.folder, args.color, args.dpi]
+        if args.cover or args.union:
+            if args.lips:
+                config = {'min' : {**{'visible' : not args.nomin}, **KWARGS['min'][key]},
+                            'max' : {**{'visible' : not args.nomax}, **KWARGS['max'][key]}}
+                sample.plot_lips_filtration(config, tag, *plot_args)
+            else:
+                sample.plot_cover_filtration(tag, *plot_args, **KWARGS[key])
+        elif args.rips or args.graph:
+            if args.lips:
+                if args.sub_file is not None:
+                    tag += f'-subsample{len(subsample)}'
+                    rips.lips_sub(subsample, sample.config['lips'])
+                    config = {'min' : {**{'visible' : False}, **KWARGS['min'][key]},
+                                'max' : {**{'visible' : False}, **KWARGS['max'][key]}}
+                    sample.plot_rips_filtration(rips, config, tag, *plot_args, subsample=subsample)
+                else:
+                    rips.lips(sample, sample.config['lips'])
+                    config = {'min' : {**{'visible' : True}, **KWARGS['min'][key]},
+                                'max' : {**{'visible' : False}, **KWARGS['max'][key]}}
+                    sample.plot_rips_filtration(rips, config, tag, *plot_args)
+            else:
+                rips.sublevels(sample)
+                config = {'f' : {**{'visible' : False}, **KWARGS[key]}}
+                sample.plot_rips_filtration(rips, config, tag, *plot_args)
+
+    if args.barcode:
+        if args.lips:
+            sample_dgms = sample.plot_lips_barcode(subsample, args.folder, args.save, args.show, args.dpi, **KWARGS['barcode'])
+        else:
+            sample_dgms = sample.plot_barcode(args.folder, args.save, args.show, args.dpi, **KWARGS['barcode'])
 
     fig, ax = sample.init_plot()
-    # if args.surf:
-    #     surf_plt = surf.plot(ax, **KWARGS['surf'])
-    sample.plot(ax, **KWARGS['sample'])
-
-    if args.cover:
-        cover_plt = sample.plot_cover(ax, args.color, **KWARGS['cover'])
-        if args.save:
-            sample.save_plot(args.folder, args.dpi, f"cover{color_str}", '-')
-    elif args.union:
-        cover_plt = sample.plot_cover(ax, args.color, **KWARGS['union'])
-        if args.save:
-            sample.save_plot(args.folder, args.dpi, f"union{color_str}", '-')
+    if args.sub_file is not None:
+        sample.plot(ax, **KWARGS['supsample'])
+        subsample.plot(ax, plot_color=args.color, **KWARGS['subsample'])
     else:
-        sample.save_plot(args.folder, args.dpi)
+        sample.plot(ax, **KWARGS['sample'])
 
-    if args.rips or args.graph:
-        key = 'rips' if args.rips else 'graph'
-        rips = RipsComplex(sample.points, sample.radius)
-        rips.sublevels(sample)
-        sample.plot_rips(ax, rips, args.color, **KWARGS[key])
-        if args.save:
-            sample.save_plot(args.folder, args.dpi, f"{key}{color_str}", '-')
+    tag = f"{key}{color_str}" if args.cover or args.union or args.rips or args.graph else None
+    if args.cover or args.union:
+        cover_plt = sample.plot_cover(ax, args.color, **KWARGS[key])
+    elif args.rips or args.graph:
+        rips_plt = sample.plot_rips(ax, rips, args.color, **KWARGS[key])
 
-    # if args.save:
-    #     # folder = os.path.join(args.folder, sample.name)
-    #     sample.save_plot(folder, args.dpi)
+    if args.save:
+        sample.save_plot(args.folder, args.dpi, tag, '-')
 
     if args.show:
+        print('close plot to exit')
         plt.show()

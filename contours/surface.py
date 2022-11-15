@@ -11,14 +11,6 @@ from lips.util import mk_gauss, down_sample, lmap, format_float
 from lips.geometry.util import lipschitz_grid, coords_to_meters, greedysample
 
 
-class _Surface:
-    def __init__(self, surface, grid):
-        self.surface, self.grid, self.shape = surface, grid, surface.shape
-        # self.points = np.vstack(lmap(lambda x: x.flatten(), grid)).T
-    def __getitem__(self, c):
-        return self.surface[c]
-
-
 class Surface:
     def __init__(self, surface, grid, cuts, colors, pad=0):
         self.cuts, self.colors, self.pad = cuts, colors, pad
@@ -33,7 +25,6 @@ class Surface:
                 'contours' : ax.contour(*self.grid, self.surface, levels=self.cuts[1:], colors=self.colors[1:], zorder=zorder+1)}
     def plot_barcode(self, name, folder='./', save=False, show=False, dpi=300, sep='_', relative=False, **kwargs):
         fig, ax = init_barcode()
-        # surf_dgms = sfa_dio(self.surface, self.cuts[0], relative=relative)
         filt, rel = dio.fill_freudenthal(self.surface), None
         def _filter(s):
             if s.dimension() == 0:
@@ -78,7 +69,7 @@ class ScalarField(Surface):
                                     np.linspace(*extents[1], shape[0])))
 
 class USGSScalarFieldData(ScalarField, Data):
-    def __init__(self, file_name, cuts, colors, pad=0, lips=None, downsample=None):
+    def __init__(self, file_name, cuts, colors, pad=0, downsample=None, lips=None):
         folder = os.path.dirname(file_name)
         extents = self.get_extents(file_name)
         surface, name = self.get_surface(file_name, downsample)

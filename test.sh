@@ -3,13 +3,25 @@
 RES=8
 NAME='test'
 THRESH=1000 # 1500
+TTHRESH=1160
+SUBTHRESH=2000
+SUBTTHRESH=2320
 NUM=1717
+SUBNUM=591
 # NUM=1717 # 808
 
 DIR="data/${NAME}"
 DATA="${DIR}/${NAME}.asc"
 
 SAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${THRESH}.csv"
+SAMPLE_CONFIG="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${THRESH}.json"
+SUBSAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${SUBNUM}_${SUBTHRESH}.csv"
+SUBSAMPLE_CONFIG="data/${NAME}/samples/${NAME}${RES}-sample${SUBNUM}_${SUBTHRESH}.csv"
+
+SSAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${TTHRESH}.csv"
+SSAMPLE_CONFIG="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${TTHRESH}.json"
+SSUBSAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${SUBNUM}_${SUBTTHRESH}.csv"
+SSUBSAMPLE_CONFIG="data/${NAME}/samples/${NAME}${RES}-sample${SUBNUM}_${SUBTTHRESH}.json"
 
 rm -r $DIR
 rm -r "figures/${NAME}${RES}"
@@ -18,18 +30,58 @@ mkdir $DIR
 cp data/rainier_small/rainier_small.asc $DATA
 
 python parse.py $DATA --save --downsample $RES
-python surf.py data/test/test8.csv --save --contours # --barcode
-python surf.py data/test/test8.csv --save --sample --thresh $THRESH
+python surf.py $DATA --save --contours --barcode
+python surf.py $DATA --save --sample --thresh $THRESH
+python surf.py $DATA --save --sample --thresh $SUBTHRESH
 
+cp $SAMPLE $SSAMPLE
+cp $SAMPLE_CONFIG $SSAMPLE_CONFIG
+cp $SUBSAMPLE $SSUBSAMPLE
+cp $SUBSAMPLE_CONFIG $SSUBSAMPLE_CONFIG
 
-python rips.py $SAMPLE --save
-python rips.py $SAMPLE --save --cover
-python rips.py $SAMPLE --save --cover --color
-python rips.py $SAMPLE --save --union
-python rips.py $SAMPLE --save --union --color
-python rips.py $SAMPLE --save --rips
-python rips.py $SAMPLE --save --rips --color
+for ASAMPLE in $SAMPLE $SUBSAMPLE $SSAMPLE $SSUBSAMPLE
+do
+  python rips.py $ASAMPLE --save --barcode
+  python rips.py $ASAMPLE --save --contours --cover
+  python rips.py $ASAMPLE --save --contours --cover --color
 
+  python rips.py $ASAMPLE --save --contours --union
+  python rips.py $ASAMPLE --save --contours --union --color
+
+  python rips.py $ASAMPLE --save --contours --rips
+  python rips.py $ASAMPLE --save --contours --rips --color
+
+  python rips.py $ASAMPLE --save --contours --graph
+done
+
+python rips.py $SAMPLE --save --contours --cover --lips
+python rips.py $SAMPLE --save --contours --cover --lips --nomin
+python rips.py $SAMPLE --save --contours --cover --lips --nomax
+python rips.py $SAMPLE --save --contours --cover --lips --color
+python rips.py $SAMPLE --save --contours --cover --lips --nomin --color
+python rips.py $SAMPLE --save --contours --cover --lips --nomax --color
+
+python rips.py $SAMPLE --save --contours --union --lips
+python rips.py $SAMPLE --save --contours --union --lips --nomin
+python rips.py $SAMPLE --save --contours --union --lips --nomax
+python rips.py $SAMPLE --save --contours --union --lips --color
+python rips.py $SAMPLE --save --contours --union --lips --nomin --color
+python rips.py $SAMPLE --save --contours --union --lips --nomax --color
+
+python rips.py $SAMPLE --save --contours --rips --lips
+python rips.py $SAMPLE --save --contours --rips --lips --nomin
+python rips.py $SAMPLE --save --contours --rips --lips --nomax
+python rips.py $SAMPLE --save --contours --rips --lips --color
+python rips.py $SAMPLE --save --contours --rips --lips --nomin --color
+python rips.py $SAMPLE --save --contours --rips --lips --nomax --color
+
+python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --barcode
+python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours
+python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomin
+python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomax
+python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --color
+python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomin --color
+python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomax --color
 
 # python parse.py data/test/test.asc # --show # --save
 # python parse.py data/test/test.asc --downsample 32 # --show # --save
