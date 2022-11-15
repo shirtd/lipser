@@ -1,3 +1,4 @@
+import numpy as np
 import argparse
 import os
 
@@ -15,14 +16,15 @@ from contours.style import COLOR, COLORS
 # SAMPLE_FILE=None # os.path.join(DDIR, 'samples', SAMPLE) #
 # SUB_FILE= None
 #
-# MULT=1. # 4/3
+COEF=2/np.sqrt(3)
+MULT=1.#1.2/COEF
 
 DATA_DIR = os.path.join('data','test')
 # CUTS=[200, 1000, 1400, 1800, 2500, 4500]
 CUTS=[1850, 2130, 2585, 3180, 4175, 4500]
 FDIR='figures'
 DPI=300
-PAD=1e-1
+PAD=1e2
 LIPS=None
 THRESH=None#PAD
 
@@ -51,8 +53,10 @@ parser.add_argument('--json', default=None, help='surface config {deprecated}')
 
 
 # PROGRAM ARGS
-parser.add_argument('--thresh', type=float, default=THRESH, help='cover radius')
 parser.add_argument('--sample', action='store_true', help='sample surface')
+parser.add_argument('--thresh', type=float, default=THRESH, help='cover radius')
+parser.add_argument('--mult', type=float, default=MULT, help='radius mult (greedy param)')
+parser.add_argument('--coef', type=float, default=COEF, help='cover coef')
 parser.add_argument('--greedy', action='store_true', help='greedy sample')
 
 parser.add_argument('--sample-file', default=None, help='sample file')
@@ -66,3 +70,4 @@ parser.add_argument('--color', action='store_true', help='plot color')
 parser.add_argument('--union', action='store_true', help='plot union')
 parser.add_argument('--surf', action='store_true', help='plot surf')
 parser.add_argument('--rips', action='store_true', help='plot surf')
+parser.add_argument('--graph', action='store_true', help='plot surf')

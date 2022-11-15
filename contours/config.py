@@ -3,16 +3,16 @@ import numpy as np
 from contours.style import COLOR
 
 
-LW=0.3
-SIZE=1
+LW=0.2
+SIZE=0.8
 
 KWARGS = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
             'barcode'   : { 'lw' : 3},
             'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : SIZE, 'color' : 'black'},
-            'cover'     : { 'visible' : True, 'zorder' : 2, 'alpha' : 0.3, 'color' : COLOR['red']},
-            'union'     : { 'visible' : True, 'zorder' : 2, 'alpha' : 1, 'color' : COLOR['red1']},
-            'rips'      : { 'visible' : True, 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0.6], 'lw' : LW},
-            'graph'     : { 'visible' : True, 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0], 'lw' : LW}}
+            'cover'     : { 'zorder' : 2, 'alpha' : 0.3, 'color' : COLOR['red']},
+            'union'     : { 'zorder' : 2, 'alpha' : 1, 'color' : COLOR['red1']},
+            'rips'      : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0.6], 'lw' : LW},
+            'graph'     : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0], 'lw' : LW}}
             # 'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
             #                         'fade' : [1, 0.8, 0.6], 'lw' : LW}},
             # 'graph'     : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],

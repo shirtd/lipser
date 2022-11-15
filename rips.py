@@ -4,8 +4,8 @@ import argparse
 import os, sys
 
 from contours.args import parser
-from contours.surface import ScalarFieldData
-from contours.sample import MetricSampleData
+# from contours.surface import ScalarFieldFile
+from contours.sample import MetricSampleFile
 from contours.config import COLOR, KWARGS
 from lips.topology import RipsComplex
 
@@ -13,9 +13,11 @@ from lips.topology import RipsComplex
 if __name__ == '__main__':
     args = parser.parse_args()
 
+    color_str = '-color' if args.color else ''
 
-    surf = ScalarFieldData(args.file, args.json)
-    sample = MetricSampleData(args.sample_file, surf.json_file, args.thresh)
+    # surf = ScalarFieldData(args.file, args.json)
+    sample = MetricSampleFile(args.file) #, surf.json_file, args.thresh)
+    args.folder = os.path.join(args.folder, sample.parent, sample.name)
 
     # TODO
     # if args.barcode:
@@ -30,24 +32,33 @@ if __name__ == '__main__':
     #     elif args.rips:
     #         # TODO
 
-    fig, ax = surf.init_plot()
-    if args.surf:
-        surf_plt = surf.plot(ax, **KWARGS['surf'])
+    fig, ax = sample.init_plot()
+    # if args.surf:
+    #     surf_plt = surf.plot(ax, **KWARGS['surf'])
     sample.plot(ax, **KWARGS['sample'])
 
     if args.cover:
         cover_plt = sample.plot_cover(ax, args.color, **KWARGS['cover'])
+        if args.save:
+            sample.save_plot(args.folder, args.dpi, f"cover{color_str}", '-')
     elif args.union:
         cover_plt = sample.plot_cover(ax, args.color, **KWARGS['union'])
+        if args.save:
+            sample.save_plot(args.folder, args.dpi, f"union{color_str}", '-')
+    else:
+        sample.save_plot(args.folder, args.dpi)
 
     if args.rips or args.graph:
+        key = 'rips' if args.rips else 'graph'
         rips = RipsComplex(sample.points, sample.radius)
         rips.sublevels(sample)
-        sample.plot_rips(ax, rips, args.color, **KWARGS['rips' if args.rips else 'graph'])
+        sample.plot_rips(ax, rips, args.color, **KWARGS[key])
+        if args.save:
+            sample.save_plot(args.folder, args.dpi, f"{key}{color_str}", '-')
 
-    if args.save:
-        folder = os.path.join(args.folder, surf.name, sample.name)
-        surf.save_plot(sample.get_tag(args), folder, args.dpi)
+    # if args.save:
+    #     # folder = os.path.join(args.folder, sample.name)
+    #     sample.save_plot(folder, args.dpi)
 
     if args.show:
         plt.show()

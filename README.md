@@ -1,5 +1,16 @@
 # lips
 
+filtrations
+sample barcodes
+lipschitz
+subsample
+subsample barcodes
+
+decentralize ploting to avoid unnecessary loads
+ - no plt in main
+implement --rips --union vs. --cover --union
+ - just hide edges
+
 ## TODO NOW
 
  - refactor sample and finish surf.py

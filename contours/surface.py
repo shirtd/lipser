@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
+import dionysus as dio
 import numpy as np
 import os
 
-from lips.topology.util import sfa_dio
+# from lips.topology.util import sfa_dio
 from contours.data import Data, DataFile
 from contours.plot import get_sample, init_surface, init_barcode, plot_barcode
+from contours.sample import sample_surface, SurfaceSampleData
 from lips.util import mk_gauss, down_sample, lmap, format_float
 from lips.geometry.util import lipschitz_grid, coords_to_meters, greedysample
 
@@ -25,27 +27,33 @@ class Surface:
     def get_data(self):
         return np.vstack([self.grid_points.T, self.surface.flatten()]).T
     def init_plot(self):
-        return init_surface(self.shape, self.extents, self.pad)
+        return init_surface(self.extents, self.pad)
     def plot(self, ax, zorder=0, **kwargs):
         return {'surface' : ax.contourf(*self.grid, self.surface, levels=self.cuts, colors=self.colors, zorder=zorder, **kwargs),
                 'contours' : ax.contour(*self.grid, self.surface, levels=self.cuts[1:], colors=self.colors[1:], zorder=zorder+1)}
-    def save_plot(self, name, folder='./', dpi=300, tag=None, sep='_'):
-        tag = '' if (tag is None or not len(tag)) else sep+tag
-        if not os.path.exists(folder):
-            print(f'creating directory {folder}')
-            os.makedirs(folder)
-        file_name = os.path.join(folder, f'{name}{tag}.png')
-        print(f'saving {file_name}')
-        plt.savefig(file_name, dpi=dpi, transparent=True)
     def plot_barcode(self, name, folder='./', save=False, show=False, dpi=300, sep='_', relative=False, **kwargs):
         fig, ax = init_barcode()
-        surf_dgms = sfa_dio(self.surface, self.cuts[0], relative=relative)
-        barcode_plt = plot_barcode(ax, surf_dgms[1], self.cuts, self.colors, **kwargs)
+        # surf_dgms = sfa_dio(self.surface, self.cuts[0], relative=relative)
+        filt, rel = dio.fill_freudenthal(self.surface), None
+        def _filter(s):
+            if s.dimension() == 0:
+                return s.data > self.cuts[0]
+            return min(self.function[i] for i in s) > self.cuts[0]
+        if relative:
+            rel = dio.Filtration([s for s in filt if s.data <= self.cuts[0]])
+        else:
+            filt = dio.Filtration([s for s in filt if _filter(s)])
+        if rel is None:
+            hom = dio.homology_persistence(filt)
+        else:
+            hom = dio.homology_persistence(filt, rel)
+        dgms = [np.array([[p.birth, p.death if p.death < np.inf else -np.inf] for p in d]) if len(d) else np.ndarray((0,2)) for d in dio.init_diagrams(hom, filt)]
+        barcode_plt = plot_barcode(ax, dgms[1], self.cuts, self.colors, **kwargs)
         tag = f"barcode{'-relative' if relative else ''}"
-        if save: surf.save_plot(name, folder, dpi, tag, sep)
+        if save: self.save_plot(folder, dpi, tag, sep)
         if show: plt.show()
         plt.close(fig)
-        return surf_dgms
+        return dgms
 
 
 class GaussianSurface(Surface):
@@ -69,7 +77,7 @@ class ScalarField(Surface):
         return np.stack(np.meshgrid(np.linspace(*extents[0], shape[1]),
                                     np.linspace(*extents[1], shape[0])))
 
-class USGSScalarField(ScalarField, Data):
+class USGSScalarFieldData(ScalarField, Data):
     def __init__(self, file_name, cuts, colors, pad=0, lips=None, downsample=None):
         folder = os.path.dirname(file_name)
         extents = self.get_extents(file_name)
@@ -99,7 +107,7 @@ class USGSScalarField(ScalarField, Data):
             self.config['lips'] = lipschitz_grid(self.surface, self.grid)
         Data.save(self, self.surface.tolist())
 
-class ScalarFieldData(ScalarField, DataFile):
+class ScalarFieldFile(ScalarField, DataFile):
     def __init__(self, file_name, json_file=None):
         if json_file is None:
             json_file = f'{os.path.splitext(file_name)[0]}.json'
@@ -113,37 +121,42 @@ class ScalarFieldData(ScalarField, DataFile):
         surf_plt['surface'].set_alpha(surf_alpha)
         surf_plt['contours'].set_alpha(cont_alpha)
         if show: plt.pause(0.5)
-        if save: self.save_plot(self.name, folder, dpi, format_float(self.cuts[0]))
-        for i, t in enumerate(self.cuts[:-1]):
+        if save: self.save_plot(folder, dpi, format_float(self.cuts[0]))
+        for i, t in enumerate(self.cuts[1:]):
             cont_alpha[i], surf_alpha[i] = 1., 0.5
             surf_plt['contours'].set_alpha(cont_alpha)
             surf_plt['surface'].set_alpha(surf_alpha)
             if show: plt.pause(0.5)
-            if save: self.save_plot(self.name, folder, dpi, format_float(t))
+            if save: self.save_plot(folder, dpi, format_float(t))
         plt.close(fig)
-    def sample(self, thresh, greedy=False, sample_file=None, mult=0.5):
-        Q = None
-        fig, ax = self.init_plot()
-        surf_plt = self.plot(ax, alpha=0.5)
-        if greedy:
-            Pidx = [i for i,f in enumerate(self.function) if f >= self.cuts[0]]
-            idx = greedysample(self.grid_points[Pidx], thresh*mult/2)
-            Q = np.vstack([self.grid_points[Pidx][idx].T, self.function[Pidx][idx]]).T
-        elif sample_file is not None:
-            sample = SampleData(sample_file, thresh)
-            thresh = sample.radius if thresh is None else thresh
-            Q = np.vstack([sample.points.T, sample.function]).T
-        P = get_sample(fig, ax, self.get_data(), thresh, Q)
-        if P is not None:
-            folder = os.path.join(self.folder, 'samples')
-            file_name = os.path.join(self.folder, f'{self.name}-sample{len(P)}_{format_float(thresh)}.csv')
-            if input('save %s (y/*)? ' % file_name) in {'y','Y','yes'}:
-                if not os.path.exists(folder):
-                    print(f'creating directory {folder}')
-                    os.makedirs(folder)
-                print('saving %s' % file_name)
-                np.savetxt(file_name, P)
-        plt.close(fig)
-        return P
+    def greedy_sample(self, thresh, mult=1., config=None):
+        data = self.get_data()[self.function > self.cuts[0]]
+        points = data[greedysample(data[:,:2], thresh*mult/4)]
+        # points = sample_surface(self, data, thresh, points) # interact: add more points
+        return SurfaceSampleData(points[:,:2], points[:,2], thresh, self, config)
+    # def sample(self, thresh, greedy=False, sample_file=None, mult=0.5):
+    #     Q = None
+    #     fig, ax = self.init_plot()
+    #     surf_plt = self.plot(ax, alpha=0.5)
+    #     if greedy:
+    #         Pidx = [i for i,f in enumerate(self.function) if f >= self.cuts[0]]
+    #         idx = greedysample(self.grid_points[Pidx], thresh*mult/2)
+    #         Q = np.vstack([self.grid_points[Pidx][idx].T, self.function[Pidx][idx]]).T
+    #     elif sample_file is not None:
+    #         sample = SampleData(sample_file, thresh)
+    #         thresh = sample.radius if thresh is None else thresh
+    #         Q = np.vstack([sample.points.T, sample.function]).T
+    #     P = get_sample(fig, ax, self.get_data(), thresh, Q)
+    #     if P is not None:
+    #         folder = os.path.join(self.folder, 'samples')
+    #         file_name = os.path.join(self.folder, f'{self.name}-sample{len(P)}_{format_float(thresh)}.csv')
+    #         if input('save %s (y/*)? ' % file_name) in {'y','Y','yes'}:
+    #             if not os.path.exists(folder):
+    #                 print(f'creating directory {folder}')
+    #                 os.makedirs(folder)
+    #             print('saving %s' % file_name)
+    #             np.savetxt(file_name, P)
+    #     plt.close(fig)
+    #     return P
     def plot_barcode(self, *args, **kwargs):
         return Surface.plot_barcode(self, self.name, *args, **kwargs)

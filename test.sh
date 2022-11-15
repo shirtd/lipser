@@ -1,18 +1,47 @@
 #! /bin/bash
 
+RES=8
+NAME='test'
+THRESH=1000 # 1500
+NUM=1717
+# NUM=1717 # 808
+
+DIR="data/${NAME}"
+DATA="${DIR}/${NAME}.asc"
+
+SAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${THRESH}.csv"
+
+rm -r $DIR
+rm -r "figures/${NAME}${RES}"
+
+mkdir $DIR
+cp data/rainier_small/rainier_small.asc $DATA
+
+python parse.py $DATA --save --downsample $RES
+python surf.py data/test/test8.csv --save --contours # --barcode
+python surf.py data/test/test8.csv --save --sample --thresh $THRESH
 
 
-python parse.py data/test/test.asc # --show # --save
-python parse.py data/test/test.asc --downsample 32 # --show # --save
+python rips.py $SAMPLE --save
+python rips.py $SAMPLE --save --cover
+python rips.py $SAMPLE --save --cover --color
+python rips.py $SAMPLE --save --union
+python rips.py $SAMPLE --save --union --color
+python rips.py $SAMPLE --save --rips
+python rips.py $SAMPLE --save --rips --color
 
-python parse.py data/test/test.asc --downsample 32 --save
 
-python surf.py data/test/test32.csv # --show # --save
-python surf.py data/test/test32.csv --contours # --show # --save
-
-
-python surf.py data/test/test32.csv --sample
-python surf.py data/test/test32.csv --sample --greedy --thresh 1000
+# python parse.py data/test/test.asc # --show # --save
+# python parse.py data/test/test.asc --downsample 32 # --show # --save
+#
+# python parse.py data/test/test.asc --downsample 32 --save
+#
+# python surf.py data/test/test32.csv # --show # --save
+# python surf.py data/test/test32.csv --contours # --show # --save
+#
+#
+# python surf.py data/test/test32.csv --sample
+# python surf.py data/test/test32.csv --sample --greedy --thresh 1000
 
 
 

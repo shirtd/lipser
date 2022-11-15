@@ -5,14 +5,14 @@ import os, sys
 
 
 from contours.args import parser
-from contours.surface import USGSScalarField
+from contours.surface import USGSScalarFieldData
 from contours.config import COLOR, KWARGS
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    surf = USGSScalarField(args.file, args.cuts, args.colors, args.pad, args.lips, args.downsample)
+    surf = USGSScalarFieldData(args.file, args.cuts, args.colors, args.pad, args.lips, args.downsample)
 
     if args.show:
         fig, ax = surf.init_plot()

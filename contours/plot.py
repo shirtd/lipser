@@ -55,7 +55,7 @@ def reset_plot(ax, scale=None, clear=True):
 #     plt.tight_layout()
 #     return fig, ax
 
-def init_surface(shape, extents, pad=1000, mult=12):
+def init_surface(extents, pad=1000, mult=12):
     extents = [[a-pad,b+pad] for a,b in extents]
     dx = abs(extents[0][0] - extents[0][1])
     dy = abs(extents[1][0] - extents[1][1])
