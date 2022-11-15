@@ -16,3 +16,4 @@ data/olym*
 *.mp3
 .circles
 data/music
+!data/rainier_small/rainier_small.asc
