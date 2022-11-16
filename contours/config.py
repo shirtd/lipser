@@ -28,6 +28,19 @@ KWARGS = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
             # 'graph'     : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
             #                         'fade' : [1, 0.8, 0], 'lw' : LW}}}
 
+GAUSS_ARGS = {  'pad' : 1.5,
+                'scale' : 1000,
+                'lips' : 3.155422091834973,
+                'extents' : [[-2, 2], [-1, 1]],
+                'cuts' : [0.05, 0.3, 0.55, 0.8, 1.35],
+                'colors' : [COLOR[c] for c in ['green', 'blue', 'purple', 'yellow']],
+                'gauss_args' : [(1,     [-0.2, 0.2],    [0.3, 0.3]),
+                                (0.5,   [-1.3, -0.1],   [0.15, 0.15]),
+                                (0.7,   [-0.8, -0.4],   [0.2, 0.2]),
+                                (0.8,   [-0.8, -0],     [0.4, 0.4]),
+                                (0.4,   [0.6, 0.0],     [0.4, 0.2]),
+                                (0.7,   [1.25, 0.3],    [0.25, 0.25])]}
+
 # CONFIG = {  'surf32' :    {'res' : 32, 'shape' : (2,1), 'pad' : (1.2, 1.55),
 #                         'cuts' : [0.05, 0.3, 0.55, 0.8, 1.35],
 #                         'colors' : ['green', 'blue', 'purple', 'yellow'],

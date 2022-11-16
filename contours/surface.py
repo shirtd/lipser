@@ -1,12 +1,14 @@
+from scipy.spatial import KDTree
 import matplotlib.pyplot as plt
 import dionysus as dio
 import numpy as np
 import os
 
 # from lips.topology.util import sfa_dio
+from contours.config import COLOR, KWARGS
 from contours.data import Data, DataFile
+from contours.sample import SurfaceSampleData
 from contours.plot import get_sample, init_surface, init_barcode, plot_barcode
-from contours.sample import sample_surface, SurfaceSampleData
 from lips.util import mk_gauss, down_sample, lmap, format_float, diff
 from lips.geometry.util import lipschitz_grid, coords_to_meters, greedysample
 
@@ -99,16 +101,16 @@ class USGSScalarFieldData(ScalarField, Data):
         Data.save(self, self.surface.tolist())
 
 class GaussianScalarFieldData(ScalarField, Data):
-    def __init__(self, name, folder, gauss_args, extents, resolution, cuts, colors, pad=0, downsample=None, lips=None, scale=100):
-        resolution0 = resolution # int(resolution*diff(extents[0])/diff(extents[1]))
-        grid = scale*np.meshgrid( np.linspace(*extents[0], resolution0),
-                                    np.linspace(*extents[1], resolution))
-        # print(extents)
-        # print(grid[0].min(), grid[0].max())
-        # print(grid[1].min(), grid[1].max())
-        # grid = np.meshgrid( np.linspace(-2, 2, 64),
-        #                     np.linspace(-1, 1, 32))
-        surface = scale*mk_gauss(grid[0], grid[1], gauss_args)
+    def __init__(self, name, folder, resolution, downsample, cuts, colors, gauss_args, extents, pad=0, lips=None, scale=None):
+        resolution0 = int(resolution * diff(extents[0]) / diff(extents[1]))
+        grid = np.meshgrid(np.linspace(*extents[0], resolution0), np.linspace(*extents[1], resolution))
+        surface = mk_gauss(grid[0], grid[1], gauss_args)
+        if scale is not None:
+            surface *= scale
+            grid *= scale
+            pad *= scale
+            cuts = (scale*np.array(cuts)).tolist()
+            extents = (scale*np.array(extents)).tolist()
         if downsample is not None:
             surface = down_sample(surface, downsample)
             name += str(downsample)
@@ -145,31 +147,32 @@ class ScalarFieldFile(ScalarField, DataFile):
     def greedy_sample(self, thresh, mult=1., config=None):
         data = self.get_data()[self.function > self.cuts[0]]
         points = data[greedysample(data[:,:2], thresh*mult/4)]
-        # points = sample_surface(self, data, thresh, points) # interact: add more points
         return SurfaceSampleData(points[:,:2], points[:,2], thresh, self, config)
-    # def sample(self, thresh, greedy=False, sample_file=None, mult=0.5):
-    #     Q = None
-    #     fig, ax = self.init_plot()
-    #     surf_plt = self.plot(ax, alpha=0.5)
-    #     if greedy:
-    #         Pidx = [i for i,f in enumerate(self.function) if f >= self.cuts[0]]
-    #         idx = greedysample(self.grid_points[Pidx], thresh*mult/2)
-    #         Q = np.vstack([self.grid_points[Pidx][idx].T, self.function[Pidx][idx]]).T
-    #     elif sample_file is not None:
-    #         sample = SampleData(sample_file, thresh)
-    #         thresh = sample.radius if thresh is None else thresh
-    #         Q = np.vstack([sample.points.T, sample.function]).T
-    #     P = get_sample(fig, ax, self.get_data(), thresh, Q)
-    #     if P is not None:
-    #         folder = os.path.join(self.folder, 'samples')
-    #         file_name = os.path.join(self.folder, f'{self.name}-sample{len(P)}_{format_float(thresh)}.csv')
-    #         if input('save %s (y/*)? ' % file_name) in {'y','Y','yes'}:
-    #             if not os.path.exists(folder):
-    #                 print(f'creating directory {folder}')
-    #                 os.makedirs(folder)
-    #             print('saving %s' % file_name)
-    #             np.savetxt(file_name, P)
-    #     plt.close(fig)
-    #     return P
+    def sample(self, thresh, sample=None, config=None):
+        fig, ax = self.init_plot()
+        surf_plt = self.plot(ax, **KWARGS['surf'])
+        data = self.get_data()[self.function > self.cuts[0]]
+        tree = KDTree(data[:,:2])
+        if sample is None:
+            points = []
+        else:
+            thresh = sample.radius if thresh is None else thresh
+            sample.plot(ax, color='black', zorder=10, s=5)
+            sample.plot_cover(ax, alpha=1, color='gray', zorder=2, radius=thresh)
+            points = sample.get_data().tolist()
+        def onclick(e):
+            p = data[tree.query(np.array([e.xdata, e.ydata]))[1]]
+            ax.add_patch(plt.Circle(p, thresh/2, color=COLOR['red1'], zorder=3, alpha=1))
+            ax.scatter(p[0], p[1], c='black', zorder=4, s=5)
+            plt.pause(0.01)
+            points.append(p)
+        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+        plt.show()
+        fig.canvas.mpl_disconnect(cid)
+        plt.close(fig)
+        if len(points):
+            points = np.vstack(sorted(points, key=lambda x: x[2]))
+            return SurfaceSampleData(points[:,:2], points[:,2], thresh, self, config)
+        return None
     def plot_barcode(self, *args, **kwargs):
         return Surface.plot_barcode(self, self.name, *args, **kwargs)

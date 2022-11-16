@@ -11,29 +11,6 @@ from contours.plot import get_sample, init_surface, plot_rips, plot_points, plot
 from lips.geometry.util import lipschitz_grid, coords_to_meters, greedysample
 
 
-def sample_surface(surf, data, thresh, points=None):
-    fig, ax = surf.init_plot()
-    if points is None:
-        points = []
-    else:
-        plot_points(ax, points, color='black', zorder=4, s=5)
-        plot_balls(ax, points, np.ones(len(points))*thresh/2, alpha=1., color='gray', zorder=2)
-        points = list(points)
-    tree = KDTree(data[:,:2])
-    def onclick(e):
-        p = data[tree.query(np.array([e.xdata, e.ydata]))[1]]
-        ax.add_patch(plt.Circle(p, thresh/2, color=COLOR['red1'], zorder=3, alpha=1))
-        ax.scatter(p[0], p[1], c='black', zorder=4, s=5)
-        plt.pause(0.01)
-        points.append(p)
-    cid = fig.canvas.mpl_connect('button_press_event', onclick)
-    plt.show()
-    fig.canvas.mpl_disconnect(cid)
-    plt.close(fig)
-    if len(points):
-        return np.vstack(sorted(points, key=lambda x: x[2]))
-    return None
-
 class Sample:
     def __init__(self, points, function, cuts, colors, pad, parent):
         self.points, self.function = points, function
@@ -46,11 +23,9 @@ class Sample:
             if a <= f < b:
                 return i
         return 0
-    def get_levels(self, margin=200):
-        # it = zip([self.cuts[0]-margin]+self.cuts, self.cuts+[self.cuts[-1]+margin])
-        # _cuts = [int(a+(b-a)/2) for a,b in it]
-        # return [x for t in zip(_cuts, self.cuts) for x in t]
-        return self.cuts
+    def get_levels(self):
+        cuts = [int(a+(b-a)/2) for a,b in zip(self.cuts[:-1], self.cuts[1:])]
+        return [x for t in zip(self.cuts, cuts) for x in t] + [self.cuts[-1]]
     def __getitem__(self, i):
         return self.points[i]
     def __call__(self, i):
@@ -105,13 +80,12 @@ class SurfaceSampleData(MetricSample, Data):
         config = {**surface.config, **_config, **({} if config is None else config)}
         name = f'{surface.name}-sample{len(function)}_{format_float(radius)}'
         Data.__init__(self, name, os.path.join(surface.folder, 'samples'), config=config)
-        MetricSample.__init__(self, points, function, radius, surface.cuts, surface.colors, surface.pad)
-
+        MetricSample.__init__(self, points, function, **config)
 
 class MetricSampleFile(MetricSample, DataFile):
     def __init__(self, file_name, json_file=None, radius=None):
         DataFile.__init__(self, file_name, json_file)
-        data, radius = self.load_data(), float(self.name.split('_')[-1]) if radius is None else radiuss
+        data, radius = self.load_data(), float(self.name.split('_')[-1]) if radius is None else radius
         MetricSample.__init__(self, data[:,:2], data[:,2], **self.config)
     def get_tag(self, args):
         return  f"sample{len(self)}_{format_float(self.radius)}"\

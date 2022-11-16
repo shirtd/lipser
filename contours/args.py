@@ -37,6 +37,7 @@ parser.add_argument('--gauss', action='store_true', help='generate gaussian surf
 parser.add_argument('--downsample', default=None, type=int, help='downsample')
 parser.add_argument('--resolution', default=1024, type=int, help='downsample')
 
+parser.add_argument('--force', action='store_true', help='force save sample')
 parser.add_argument('--barcode', action='store_true')
 parser.add_argument('--relative', action='store_true')
 parser.add_argument('--show', action='store_true')

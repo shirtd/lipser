@@ -10,7 +10,7 @@ import numpy as np
 #     return '%de%d' % (int(f), e)
 
 def format_float(f):
-    return np.format_float_scientific(f, trim='-') # if int(f) != f else str(int(f))
+    return np.format_float_scientific(f, trim='-') if int(f) != f else str(int(f))
 
 # def format_float(f, buf=10000):
 #     if int(f) == f:
