@@ -18,7 +18,12 @@ if __name__ == '__main__':
     # surf = ScalarFieldData(args.file, args.json)
     sample = MetricSampleFile(args.file)
     args.folder = os.path.join(args.folder, sample.parent, sample.name)
-
+    if args.lips:
+        args.folder = os.path.join(args.folder, 'lips')
+    elif args.rips or args.graph:
+        args.folder = os.path.join(args.folder, 'rips')
+    elif args.cover or args.union:
+        args.folder = os.path.join(args.folder, 'cover')
     if args.sub_file is not None:
         subsample = MetricSampleFile(args.sub_file)
 

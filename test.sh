@@ -1,27 +1,29 @@
 #! /bin/bash
 
+COLOR_REST="$(tput sgr0)"
+COLOR_GREEN="$(tput setaf 2)"
+
 RES=8
 NAME='test'
 THRESH=1000 # 1500
-TTHRESH=1160
+THRESH2=1160
 SUBTHRESH=2000
-SUBTTHRESH=2320
-NUM=1717
-SUBNUM=591
+SUBTHRESH2=2320
+# NUM=1717
+# SUBNUM=591
 # NUM=1717 # 808
 
 DIR="data/${NAME}"
 DATA="${DIR}/${NAME}.asc"
+RDATA="${DIR}/${NAME}${RES}.csv"
 
-SAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${THRESH}.csv"
-SAMPLE_CONFIG="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${THRESH}.json"
-SUBSAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${SUBNUM}_${SUBTHRESH}.csv"
-SUBSAMPLE_CONFIG="data/${NAME}/samples/${NAME}${RES}-sample${SUBNUM}_${SUBTHRESH}.csv"
 
-SSAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${TTHRESH}.csv"
-SSAMPLE_CONFIG="data/${NAME}/samples/${NAME}${RES}-sample${NUM}_${TTHRESH}.json"
-SSUBSAMPLE="data/${NAME}/samples/${NAME}${RES}-sample${SUBNUM}_${SUBTTHRESH}.csv"
-SSUBSAMPLE_CONFIG="data/${NAME}/samples/${NAME}${RES}-sample${SUBNUM}_${SUBTTHRESH}.json"
+SAMPLE_PATH=${DIR}/samples/${NAME}${RES}-sample
+
+SAMPLE=${SAMPLE_PATH}*_${THRESH}.csv
+SUBSAMPLE=${SAMPLE_PATH}*_${SUBTHRESH}.csv
+SAMPLE2=${SAMPLE_PATH}*_${THRESH2}.csv
+SUBSAMPLE2=${SAMPLE_PATH}*_${SUBTHRESH2}.csv
 
 rm -r $DIR
 rm -r "figures/${NAME}${RES}"
@@ -30,58 +32,82 @@ mkdir $DIR
 cp data/rainier_small/rainier_small.asc $DATA
 
 python parse.py $DATA --save --downsample $RES
-python surf.py $DATA --save --contours --barcode
-python surf.py $DATA --save --sample --thresh $THRESH
-python surf.py $DATA --save --sample --thresh $SUBTHRESH
+python surf.py $RDATA --save --contours --barcode
+python surf.py $RDATA --save --sample --thresh $THRESH
+python surf.py $RDATA --save --sample --thresh $SUBTHRESH
 
-cp $SAMPLE $SSAMPLE
-cp $SAMPLE_CONFIG $SSAMPLE_CONFIG
-cp $SUBSAMPLE $SSUBSAMPLE
-cp $SUBSAMPLE_CONFIG $SSUBSAMPLE_CONFIG
+# cp $SAMPLE $SSAMPLE
+# cp $SUBSAMPLE $SSUBSAMPLE
+# cp "${SAMPLE_PATH}_${THRESH}.json" "${SAMPLE_PATH}_${THRESH2}.json"
+# cp "${SAMPLE_PATH}_${SUBTHRESH}.json" "${SAMPLE_PATH}_${SUBTHRESH2}.json"
 
-for ASAMPLE in $SAMPLE $SUBSAMPLE $SSAMPLE $SSUBSAMPLE
-do
-  python rips.py $ASAMPLE --save --barcode
-  python rips.py $ASAMPLE --save --contours --cover
-  python rips.py $ASAMPLE --save --contours --cover --color
-
-  python rips.py $ASAMPLE --save --contours --union
-  python rips.py $ASAMPLE --save --contours --union --color
-
-  python rips.py $ASAMPLE --save --contours --rips
-  python rips.py $ASAMPLE --save --contours --rips --color
-
-  python rips.py $ASAMPLE --save --contours --graph
+for SAMPLENAME in $SAMPLE $SUBSAMPLE; do # $SAMPLE2 $SUBSAMPLE2; do
+  CMD="rips.py $SAMPLENAME --save --barcode --contours --graph"
+  printf '%s%s%s\n' $COLOR_GREEN "python $CMD" $COLOR_REST
+  python $CMD
+  for RUN in '--cover' '--union' '--rips'; do
+    for COLOR in '' '--color'; do
+      CMD="rips.py $SAMPLE --save --contours $RUN $COLOR"
+      printf '%s%s%s\n' $COLOR_GREEN "python $CMD" $COLOR_REST
+      python $CMD
+    done
+  done
+  # python rips.py $SAMPLENAME --save --contours --cover
+  # python rips.py $SAMPLENAME --save --contours --cover --color
+  #
+  # python rips.py $SAMPLENAME --save --contours --union
+  # python rips.py $SAMPLENAME --save --contours --union --color
+  #
+  # python rips.py $SAMPLENAME --save --contours --rips
+  # python rips.py $SAMPLENAME --save --contours --rips --color
 done
 
-python rips.py $SAMPLE --save --contours --cover --lips
-python rips.py $SAMPLE --save --contours --cover --lips --nomin
-python rips.py $SAMPLE --save --contours --cover --lips --nomax
-python rips.py $SAMPLE --save --contours --cover --lips --color
-python rips.py $SAMPLE --save --contours --cover --lips --nomin --color
-python rips.py $SAMPLE --save --contours --cover --lips --nomax --color
+CMD="rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --barcode"
+printf '%s%s%s\n' $COLOR_GREEN "python $CMD" $COLOR_REST
+python $CMD
+for FLAG in '' '--nomin' '--nomax'; do
+  for COLOR in '' '--color'; do
+    CMD="rips.py $SAMPLE --sub-file $SUBSAMPLE --save --contours --rips --lips $FLAG $COLOR"
+    printf '%s%s%s\n' $COLOR_GREEN "python $CMD" $COLOR_REST
+    python $CMD
+    for RUN in '--cover' '--union' '--rips'; do
+      CMD="rips.py $SAMPLE --save --contours $RUN --lips $FLAG $COLOR"
+      printf '%s%s%s\n' $COLOR_GREEN "python $CMD" $COLOR_REST
+      python $CMD
+    done
+  done
+done
 
-python rips.py $SAMPLE --save --contours --union --lips
-python rips.py $SAMPLE --save --contours --union --lips --nomin
-python rips.py $SAMPLE --save --contours --union --lips --nomax
-python rips.py $SAMPLE --save --contours --union --lips --color
-python rips.py $SAMPLE --save --contours --union --lips --nomin --color
-python rips.py $SAMPLE --save --contours --union --lips --nomax --color
 
-python rips.py $SAMPLE --save --contours --rips --lips
-python rips.py $SAMPLE --save --contours --rips --lips --nomin
-python rips.py $SAMPLE --save --contours --rips --lips --nomax
-python rips.py $SAMPLE --save --contours --rips --lips --color
-python rips.py $SAMPLE --save --contours --rips --lips --nomin --color
-python rips.py $SAMPLE --save --contours --rips --lips --nomax --color
+# python rips.py $SAMPLE --save --contours --cover --lips --nomin
+# python rips.py $SAMPLE --save --contours --cover --lips --nomax
+# python rips.py $SAMPLE --save --contours --cover --lips --color
+# python rips.py $SAMPLE --save --contours --cover --lips --nomin --color
+# python rips.py $SAMPLE --save --contours --cover --lips --nomax --color
+#
+# python rips.py $SAMPLE --save --contours --union --lips
+# python rips.py $SAMPLE --save --contours --union --lips --nomin
+# python rips.py $SAMPLE --save --contours --union --lips --nomax
+# python rips.py $SAMPLE --save --contours --union --lips --color
+# python rips.py $SAMPLE --save --contours --union --lips --nomin --color
+# python rips.py $SAMPLE --save --contours --union --lips --nomax --color
+#
+# python rips.py $SAMPLE --save --contours --rips --lips
+# python rips.py $SAMPLE --save --contours --rips --lips --nomin
+# python rips.py $SAMPLE --save --contours --rips --lips --nomax
+# python rips.py $SAMPLE --save --contours --rips --lips --color
+# python rips.py $SAMPLE --save --contours --rips --lips --nomin --color
+# python rips.py $SAMPLE --save --contours --rips --lips --nomax --color
+#
+# python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --barcode
+# python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours
+# python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomin
+# python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomax
+# python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --color
+# python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomin --color
+# python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomax --color
 
-python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --barcode
-python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours
-python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomin
-python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomax
-python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --color
-python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomin --color
-python rips.py $SAMPLE --sub-file $SUBSAMPLE --save --lips --rips --contours --nomax --color
+
 
 # python parse.py data/test/test.asc # --show # --save
 # python parse.py data/test/test.asc --downsample 32 # --show # --save

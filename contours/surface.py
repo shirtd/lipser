@@ -7,7 +7,7 @@ import os
 from contours.data import Data, DataFile
 from contours.plot import get_sample, init_surface, init_barcode, plot_barcode
 from contours.sample import sample_surface, SurfaceSampleData
-from lips.util import mk_gauss, down_sample, lmap, format_float
+from lips.util import mk_gauss, down_sample, lmap, format_float, diff
 from lips.geometry.util import lipschitz_grid, coords_to_meters, greedysample
 
 
@@ -93,6 +93,28 @@ class USGSScalarFieldData(ScalarField, Data):
             surface = down_sample(surface, downsample)
             name += str(downsample)
         return surface, name
+    def save(self, config=None):
+        if self.lips is None:
+            self.config['lips'] = lipschitz_grid(self.surface, self.grid)
+        Data.save(self, self.surface.tolist())
+
+class GaussianScalarFieldData(ScalarField, Data):
+    def __init__(self, name, folder, gauss_args, extents, resolution, cuts, colors, pad=0, downsample=None, lips=None, scale=100):
+        resolution0 = resolution # int(resolution*diff(extents[0])/diff(extents[1]))
+        grid = scale*np.meshgrid( np.linspace(*extents[0], resolution0),
+                                    np.linspace(*extents[1], resolution))
+        # print(extents)
+        # print(grid[0].min(), grid[0].max())
+        # print(grid[1].min(), grid[1].max())
+        # grid = np.meshgrid( np.linspace(-2, 2, 64),
+        #                     np.linspace(-1, 1, 32))
+        surface = scale*mk_gauss(grid[0], grid[1], gauss_args)
+        if downsample is not None:
+            surface = down_sample(surface, downsample)
+            name += str(downsample)
+        config = {'extents' : extents, 'cuts' : cuts, 'colors' : colors, 'pad' : pad, 'lips' : lips}
+        ScalarField.__init__(self, surface, **config)
+        Data.__init__(self, name, folder, config)
     def save(self, config=None):
         if self.lips is None:
             self.config['lips'] = lipschitz_grid(self.surface, self.grid)

@@ -8,7 +8,7 @@ from lips.util import lmap, format_float
 from contours.style import COLOR
 
 
-def init_barcode(figsize=(12,7), hide_ticks=False, ylim=None):
+def init_barcode(figsize=(14,5), hide_ticks=False, ylim=None):
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     if hide_ticks:
         ax[1].set_xticks([])
@@ -18,7 +18,7 @@ def init_barcode(figsize=(12,7), hide_ticks=False, ylim=None):
     plt.tight_layout()
     return fig, ax
 
-def init_barcodes(figsize=(6,4), hide_ticks=False, ylim=None):
+def init_barcodes(figsize=(14,9), hide_ticks=False, ylim=None):
     fig, ax = plt.subplots(2, 1, sharex=True, figsize=figsize)
     if hide_ticks:
         ax[1].set_xticks([])

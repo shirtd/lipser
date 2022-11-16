@@ -47,9 +47,10 @@ class Sample:
                 return i
         return 0
     def get_levels(self, margin=200):
-        it = zip([self.cuts[0]-margin]+self.cuts, self.cuts+[self.cuts[-1]+margin])
-        _cuts = [int(a+(b-a)/2) for a,b in it]
-        return [x for t in zip(_cuts, self.cuts) for x in t]
+        # it = zip([self.cuts[0]-margin]+self.cuts, self.cuts+[self.cuts[-1]+margin])
+        # _cuts = [int(a+(b-a)/2) for a,b in it]
+        # return [x for t in zip(_cuts, self.cuts) for x in t]
+        return self.cuts
     def __getitem__(self, i):
         return self.points[i]
     def __call__(self, i):

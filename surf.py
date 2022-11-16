@@ -12,7 +12,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     surf = ScalarFieldFile(args.file, args.json)
-    args.folder = os.path.join(args.folder, surf.name)
+    args.folder = os.path.join(args.folder, surf.name, 'surf')
 
     if args.barcode:
         surf_dgms = surf.plot_barcode(args.folder, args.save, args.show, args.dpi, **KWARGS['barcode'])
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     if args.contours:
         surf.plot_contours(args.show, args.save, args.folder, args.dpi)
 
-    if args.sample:
+    if args.sample or args.greedy:
         # if args.thresh is None:
         #     args.thresh = 1000
         # sample = surf.sample(args.thresh, args.greedy, args.sample_file)
@@ -28,8 +28,12 @@ if __name__ == '__main__':
         if args.save:# or input('save %s (y/*)? ' % sample.name) in {'y','Y','yes'}:
             sample.save(sample.get_data())
 
+
     fig, ax = surf.init_plot()
     surf_plt = surf.plot(ax, **KWARGS['surf'])
+
+    if args.sample or args.greedy:
+        sample.plot(ax, **KWARGS['sample'])
 
     if args.save:
         if args.sample_file is None:

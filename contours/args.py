@@ -31,9 +31,11 @@ THRESH=None#PAD
 # PARSE
 parser = argparse.ArgumentParser(prog='parse')
 
-parser.add_argument('file', help='surface file')
+parser.add_argument('file', nargs='?', help='surface file')
 parser.add_argument('--tag', default='', help='file tag')
+parser.add_argument('--gauss', action='store_true', help='generate gaussian surface')
 parser.add_argument('--downsample', default=None, type=int, help='downsample')
+parser.add_argument('--resolution', default=1024, type=int, help='downsample')
 
 parser.add_argument('--barcode', action='store_true')
 parser.add_argument('--relative', action='store_true')
@@ -45,7 +47,7 @@ parser.add_argument('--dpi', type=int, default=DPI, help='image dpi')
 
 parser.add_argument('--cuts', default=CUTS, nargs='+', type=float, help='cuts')
 parser.add_argument('--colors', default=COLORS, nargs='+', type=str, help='colors')
-parser.add_argument('--pad', default=PAD, help='padding')
+parser.add_argument('--pad', default=PAD, type=float, help='padding')
 # parser.add_argument('--lips', default=LIPS, type=float, help='lipschitz constant')
 
 parser.add_argument('--json', default=None, help='surface config {deprecated}')
