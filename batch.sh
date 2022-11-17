@@ -2,9 +2,9 @@
 
 
 NAME=${1:-'surf'}
-RES=${2:-16}
-THRESH=${3:-2000}
-SUBTHRESH=${4:-3000}
+RES=${2:-8}
+THRESH=${3:-100}
+SUBTHRESH=${4:-300}
 
 STEP=0
 DIR="data/${NAME}"
