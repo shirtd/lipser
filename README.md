@@ -2,9 +2,30 @@
 
 ## TODO
 
+10000 is a bit much...
+
+parser.py
+ - abstract, supports surf.py
+ - built in: gauss and usgs
+surf.py <- parser.py
+ - generate surface (implements parsers)
+ - load/plot surface
+ - plot surface contours
+ - surface barcode
+sample.py <- surf.py
+ - default: show surface (and sample, if provided/generated)
+ - sample surface
+ - plot cover/union and contours
+ - plot lips cover/union and contours
+rips.py
+ - no cover plots
+ - always compute 2/sqrt(3) rips and filter
+   - plot both
+ - lips plot and contours
+ - lips sub plot and contours
+ - rips and lips (sub) barcodes
+
 color flag saves an additional file; no recompute.
-redo contours.sample.Sample.get_levels
- - cut "type" could be an arg; _=a,b.., diff=(b-a)/2.., etc
 
 ## TODO FUTURE
 

@@ -34,20 +34,17 @@ if __name__ == '__main__':
     fig, ax = surf.init_plot()
     surf_plt = surf.plot(ax, **KWARGS['surf'])
 
-    if args.sample or args.greedy:
+    if sample is not None:
         sample.plot(ax, **KWARGS['sample'])
         sample.plot_cover(ax, **KWARGS['union' if args.union else 'cover'])
-
-    if args.save:
-        if args.sample_file is None:
-            surf.save_plot(args.folder, args.dpi)
-        else:
-            sample.save_plot(os.path.join(args.folder, sample.name), args.dpi)
-
-    if args.show:
-        if sample is None:
-            plt.show()
-        else:
+        if args.save:
+            sample.save_plot(args.folder, args.dpi)
+        if args.show:
             plt.pause(0.1)
-            if args.force or input(f'save {sample.name} (y/*)? ') == 'y':
-                sample.save(sample.get_data())
+        if args.force or input(f'save {sample.name} (y/*)? ') == 'y':
+            sample.save(sample.get_data())
+    else:
+        if args.save:
+            surf.save_plot(args.folder, args.dpi)
+        if args.show:
+            plt.show()

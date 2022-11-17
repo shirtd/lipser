@@ -6,11 +6,16 @@ from contours.style import COLOR
 LW=0.2
 SIZE=0.8
 
-KWARGS = {  'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
-            'barcode'   : { 'lw' : 3},
+# TODO: make this a function
+# pass args to modify defaults
+
+# [0.05, 0.2, 0.45, 0.875, 1.09, 1.31]
+
+KWARGS = {  'barcode'   : { 'lw' : 3},
+            'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
             'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : SIZE, 'color' : 'black'},
-            'supsample' : { 'zorder' : 10, 'edgecolors' : 'black', 'facecolors' : 'none', 's' : 2, 'lw' : 0.5},
-            'subsample' : { 'zorder' : 10, 's' : 5, 'color' : 'black'},
+            'supsample' : { 'zorder' : 10, 'edgecolors' : 'black', 'facecolors' : 'none', 's' : SIZE, 'lw' : 0.4},
+            'subsample' : { 'zorder' : 10, 's' : SIZE*2, 'color' : 'black'},
             'cover'     : { 'zorder' : 2, 'alpha' : 0.3, 'color' : COLOR['red']},
             'union'     : { 'zorder' : 2, 'alpha' : 1, 'color' : COLOR['red1']},
             'rips'      : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0.6], 'lw' : LW},
@@ -32,8 +37,10 @@ GAUSS_ARGS = {  'pad' : 1.5,
                 'scale' : 1000,
                 'lips' : 3.155422091834973,
                 'extents' : [[-2, 2], [-1, 1]],
-                'cuts' : [0.05, 0.3, 0.55, 0.8, 1.35],
-                'colors' : [COLOR[c] for c in ['green', 'blue', 'purple', 'yellow']],
+                # 'cuts' : [0.05, 0.3, 0.55, 0.8, 1.35],
+                'cuts' : [0.05, 0.2, 0.55, 0.885, 1.15, 1.4],
+                # 'colors' : [COLOR[c] for c in ['green', 'blue', 'purple', 'yellow']],
+                'colors' : [COLOR[c] for c in ['blue','green','yellow','salmon','purple']],
                 'gauss_args' : [(1,     [-0.2, 0.2],    [0.3, 0.3]),
                                 (0.5,   [-1.3, -0.1],   [0.15, 0.15]),
                                 (0.7,   [-0.8, -0.4],   [0.2, 0.2]),

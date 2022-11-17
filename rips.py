@@ -48,7 +48,7 @@ if __name__ == '__main__':
         elif args.rips or args.graph:
             if args.lips:
                 if args.sub_file is not None:
-                    tag += f'-subsample{len(subsample)}'
+                    tag += f'-subsample{len(subsample)}_'
                     rips.lips_sub(subsample, sample.config['lips'])
                     config = {'min' : {**{'visible' : False}, **KWARGS['min'][key]},
                                 'max' : {**{'visible' : False}, **KWARGS['max'][key]}}
