@@ -67,11 +67,14 @@ class RipsComplex(SimplicialComplex, EmbeddedComplex):
     def lips(self, sample, constant, invert_min=False):
         for s in self(0):
             s.data['max'] = s.data['min'] = sample(s[0])
-        for s in self(1):
-            sf = sample(s[0]) + sample(s[1])
-            sd = constant * s.data['dist']
-            s.data['max'] = (sf + sd) / 2
-            s.data['min'] = (sf - sd) / 2
+        for s in self(1):# + self(2):
+            s.data['max'] = max(sample(v) for v in s) + constant * s.data['dist'] / 2
+            s.data['min'] = min(sample(v) for v in s) - constant * s.data['dist'] / 2
+        # for s in self(1):
+        #     sf = sample(s[0]) + sample(s[1])
+        #     sd = constant * s.data['dist']
+        #     s.data['max'] = (sf + sd) / 2
+        #     s.data['min'] = (sf - sd) / 2
         for s in self(2):
             s.data['max'] = max(self[e].data['max'] for e in combinations(s,2))
             s.data['min'] = (max if invert_min else min)(self[e].data['min'] for e in combinations(s,2))

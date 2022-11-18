@@ -35,8 +35,8 @@ def get_config(args):
         if args.sub_file is not None:
             return {'min' : {**{'visible' : False}, **KWARGS['min'][args.key]},
                     'max' : {**{'visible' : False}, **KWARGS['max'][args.key]}}
-        return {'min' : {**{'visible' : True}, **KWARGS['min'][args.key]},
-                'max' : {**{'visible' : False}, **KWARGS['max'][args.key]}}
+        return {'min' : {**{'visible' : False, 'key' : 'min'}, **KWARGS['min'][args.key]},
+                'max' : {**{'visible' : False, 'key' : 'max'}, **KWARGS['max'][args.key]}}
     return {'f' : {**{'visible' : False}, **KWARGS[args.key]}}
 
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
             if args.sub_file is not None:
                 rips.lips_sub(subsample, sample.config['lips'])
             else:
-                rips.lips(sample, sample.config['lips'])
+                rips.lips(sample, sample.config['lips'], invert_min=True)
         else:
             rips.sublevels(sample)
 
@@ -84,7 +84,6 @@ if __name__ == '__main__':
                 if args.sub_file is not None:
                     sample.plot_rips_filtration(rips, config, tag, *plot_args, subsample=subsample)
                 else:
-                    rips.lips(sample, sample.config['lips'])
                     sample.plot_rips_filtration(rips, config, tag, *plot_args)
             else:
                 sample.plot_rips_filtration(rips, config, tag, *plot_args)

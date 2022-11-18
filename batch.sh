@@ -30,6 +30,7 @@ SAMPLE=$( echo "${SAMPLE_PATH}"*"-${THRESH}.csv" )
 SUBSAMPLE=$( echo "${SAMPLE_PATH}"*"-${SUBTHRESH}.csv" )
 
 RUN "rips.py $SAMPLE --save --barcode --contours --rips --color"
+RUN "rips.py $SUBSAMPLE --save --barcode --contours --rips --color"
 RUN "rips.py $SAMPLE --sub-file $SUBSAMPLE --save --barcode --contours --lips --rips --color"
 for COLOR in '' '--color'; do
   for SUB in '--cover' '--union'; do

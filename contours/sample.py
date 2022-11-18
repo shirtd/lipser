@@ -67,9 +67,13 @@ class MetricSample(Sample):
             balls.append(s)
             ax.add_patch(s)
         return balls
-    def plot_rips(self, ax, rips, plot_colors=False, color=COLOR['red'], **kwargs):
+    def plot_rips(self, ax, rips, plot_colors=False, color=COLOR['red'], key=None, **kwargs):
         if plot_colors:
-            kwargs['tri_colors'] = [self.colors[self.get_cut(self(t).max())] for t in rips(2)]
+            if key is None:
+                kwargs['tri_colors'] = [self.colors[self.get_cut(self(t).max())] for t in rips(2)]
+            else:
+                kwargs['tri_colors'] = [self.colors[self.get_cut(t.data[key])] for t in rips(2)]
+            # kwargs['tri_colors'] = [self.colors[self.get_cut(t.data['min'])] for t in rips(2)]
         else:
             kwargs['color'] = color
         return plot_rips(ax, rips, **kwargs)
