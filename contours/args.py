@@ -32,10 +32,11 @@ THRESH=None#PAD
 parser = argparse.ArgumentParser(prog='parse')
 
 parser.add_argument('file', nargs='?', help='surface file')
-parser.add_argument('--tag', default='', help='file tag')
 parser.add_argument('--gauss', action='store_true', help='generate gaussian surface')
 parser.add_argument('--downsample', default=None, type=int, help='downsample')
 parser.add_argument('--resolution', default=1024, type=int, help='downsample')
+parser.add_argument('--key', '-k', default=None, type=str, help='program key')
+parser.add_argument('--parent', default=None, help='sample parent (supersample)')
 
 parser.add_argument('--force', action='store_true', help='force save sample')
 parser.add_argument('--barcode', action='store_true')
@@ -78,3 +79,4 @@ parser.add_argument('--graph', action='store_true', help='plot surf')
 parser.add_argument('--lips', action='store_true', help='plot lips')
 parser.add_argument('--nomin', action='store_true', help='max only')
 parser.add_argument('--nomax', action='store_true', help='min only')
+parser.add_argument('--noim', action='store_true', help='no image persistence')

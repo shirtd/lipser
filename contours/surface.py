@@ -144,9 +144,9 @@ class ScalarFieldFile(ScalarField, DataFile):
             if show: plt.pause(0.5)
             if save: self.save_plot(folder, dpi, format_float(t))
         plt.close(fig)
-    def greedy_sample(self, thresh, mult=1., config=None):
+    def greedy_sample(self, thresh, mult=1., config=None, noise=None):
         data = self.get_data()[self.function > self.cuts[0]]
-        points = data[greedysample(data[:,:2], thresh*mult/4)]
+        points = data[greedysample(data[:,:2], thresh*mult/4)] # TODO perturb the sample
         return SurfaceSampleData(points[:,:2], points[:,2], thresh, self, config)
     def sample(self, thresh, sample=None, config=None):
         fig, ax = self.init_plot()

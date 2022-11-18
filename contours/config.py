@@ -3,8 +3,8 @@ import numpy as np
 from contours.style import COLOR
 
 
-LW=0.2
-SIZE=0.8
+LW=0.18
+SIZE=0.7
 
 # TODO: make this a function
 # pass args to modify defaults

@@ -7,8 +7,8 @@ from contours.config import COLOR, KWARGS
 from contours.data import Data, DataFile
 from lips.util import lmap, format_float
 from lips.topology import RipsComplex, Diagram, Filtration
-from contours.plot import get_sample, init_surface, plot_rips, plot_points, plot_balls, init_barcode, plot_barcode
 from lips.geometry.util import lipschitz_grid, coords_to_meters, greedysample
+from contours.plot import get_sample, init_surface, plot_rips, plot_points, plot_balls, init_barcode, plot_barcode
 
 
 class Sample:
@@ -78,14 +78,16 @@ class SurfaceSampleData(MetricSample, Data):
     def __init__(self, points, function, radius, surface, config=None):
         _config = {'radius' : radius, 'parent' : surface.name}
         config = {**surface.config, **_config, **({} if config is None else config)}
-        name = f'{surface.name}-sample{len(function)}_{format_float(radius)}'
+        name = f'{surface.name}-sample{len(function)}-{format_float(radius)}'
         Data.__init__(self, name, os.path.join(surface.folder, 'samples'), config=config)
         MetricSample.__init__(self, points, function, **config)
 
 class MetricSampleFile(MetricSample, DataFile):
     def __init__(self, file_name, json_file=None, radius=None):
         DataFile.__init__(self, file_name, json_file)
-        data, radius = self.load_data(), float(self.name.split('_')[-1]) if radius is None else radius
+        data = self.load_data()
+        # radius = float(self.name.split('_')[-1]) if radius is None else radius
+        radius = self.config['radius'] if radius is None else radius
         MetricSample.__init__(self, data[:,:2], data[:,2], **self.config)
     def get_tag(self, args):
         return  f"sample{len(self)}_{format_float(self.radius)}"\
@@ -94,13 +96,15 @@ class MetricSampleFile(MetricSample, DataFile):
                 f"{'-surf' if args.surf else ''}"
     def init_plot(self):
         return init_surface(self.config['extents'], self.pad)
-    def plot_rips_filtration(self, rips, config, tag=None, show=True, save=True, folder='figures', plot_colors=False, dpi=300, subsample=None):
+    def plot_rips_filtration(self, rips, config, tag=None, show=True, save=True,
+                            folder='figures', plot_colors=False, dpi=300, subsample=None):
         fig, ax = self.init_plot()
         if subsample is None:
             self.plot(ax, **KWARGS['sample'])
         else:
             self.plot(ax, **KWARGS['supsample'])
             subsample.plot(ax, plot_color=plot_colors, **KWARGS['subsample'])
+            plot_colors = False
         rips_plt = {k : self.plot_rips(ax, rips, plot_colors, **v) for k,v in config.items()}
         for i, t in enumerate(self.get_levels()):
             for d in (1,2):
@@ -113,7 +117,8 @@ class MetricSampleFile(MetricSample, DataFile):
             if save:
                 self.save_plot(folder, dpi, f"{tag}{format_float(t)}")
         plt.close(fig)
-    def plot_cover_filtration(self, tag=None, show=True, save=True, folder='figures', plot_colors=False, dpi=300, **kwargs):
+    def plot_cover_filtration(self, tag=None, show=True, save=True,
+                            folder='figures', plot_colors=False, dpi=300, **kwargs):
         fig, ax = self.init_plot()
         self.plot(ax, **KWARGS['sample'])
         offset_plt = self.plot_cover(ax, plot_colors, visible=False, **kwargs)
@@ -126,7 +131,8 @@ class MetricSampleFile(MetricSample, DataFile):
             if save:
                 self.save_plot(folder, dpi, f"{tag}{format_float(t)}")
         plt.close(fig)
-    def plot_lips_filtration(self, config, tag=None, show=True, save=True, folder='figures', plot_colors=False, dpi=300, **kwargs):
+    def plot_lips_filtration(self, config, tag=None, show=True, save=True,
+                            folder='figures', plot_colors=False, dpi=300, **kwargs):
         fig, ax = self.init_plot()
         self.plot(ax, **KWARGS['sample'])
         offset_plt = {  'max' : self.plot_balls(ax, 2*self.function/self.config['lips'], plot_colors, **config['max']),
@@ -141,12 +147,16 @@ class MetricSampleFile(MetricSample, DataFile):
             if save:
                 self.save_plot(folder, dpi, f"lips-{tag}{format_float(t)}")
         plt.close(fig)
-    def plot_barcode(self, folder='./', save=False, show=False, dpi=300, sep='_', relative=False, **kwargs):
+         # [args.show, args.save, args.folder, args.color, args.dpi]
+    def plot_barcode(self, rips, show=False, save=False, folder='./', _color=None, dpi=300, sep='_', relative=False, **kwargs):
         fig, ax = init_barcode()
-        rips = RipsComplex(self.points, self.radius * 2 / np.sqrt(3), verbose=True)
-        rips.sublevels(self)
+        # rips = RipsComplex(self.points, self.radius * 2 / np.sqrt(3), verbose=True)
+        # rips.sublevels(self)
         filt = Filtration(rips, 'f')
-        pivot = Filtration(rips, 'f', filter=lambda s: s['dist'] <= self.radius)
+        if rips.thresh > self.radius:
+            pivot = Filtration(rips, 'f', filter=lambda s: s['dist'] <= self.radius)
+        else:
+            pivot = Filtration(rips, 'f')
         hom =  Diagram(rips, filt, pivot=pivot, verbose=True)
         smoothing = None # lambda p: [p[0]+self.config['lips']*self.radius, p[1]-self.config['lips']*self.radius]
         dgms = hom.get_diagram(rips, filt, pivot, smoothing)
@@ -156,17 +166,39 @@ class MetricSampleFile(MetricSample, DataFile):
         if show: plt.show()
         plt.close(fig)
         return dgms
-    def plot_lips_barcode(self, subsample, folder='./', save=False, show=False, dpi=300, sep='_', relative=False, **kwargs):
+    def plot_lips_barcode(self, rips, show=False, save=False, folder='./', _color=None, dpi=300, sep='_', relative=False, **kwargs):
         fig, ax = init_barcode()
-        rips = RipsComplex(self.points, self.radius * 2 / np.sqrt(3), verbose=True)
-        rips.lips_sub(subsample, self.config['lips'])
+        # rips = RipsComplex(self.points, self.radius * 2 / np.sqrt(3), verbose=True)
+        # rips.sublevels(self)
+        # rips.lips(self, self.config['lips'], True)
         filt = Filtration(rips, 'min')
-        pivot = Filtration(rips, 'max', filter=lambda s: s['dist'] <= self.radius)
+        if rips.thresh > self.radius:
+            pivot = Filtration(rips, 'max', filter=lambda s: s['dist'] <= self.radius)
+        else:
+            pivot = Filtration(rips, 'max')
         hom =  Diagram(rips, filt, pivot=pivot, verbose=True)
         smoothing = None # lambda p: [p[0]+self.config['lips']*self.radius, p[1]-self.config['lips']*self.radius]
         dgms = hom.get_diagram(rips, filt, pivot, smoothing)
         barode_plt = plot_barcode(ax, dgms[1], self.cuts, self.colors, **kwargs)
-        tag = f"barcode-lips{'-relative' if relative else ''}"
+        tag = f"barcode{'-relative' if relative else ''}-lips"
+        if save: self.save_plot(folder, dpi, tag, sep)
+        if show: plt.show()
+        plt.close(fig)
+        return dgms
+    def plot_lips_sub_barcode(self, rips, subsample, show=False, save=False, folder='./', _color=None, dpi=300, sep='_', relative=False, **kwargs):
+        fig, ax = init_barcode()
+        # rips = RipsComplex(self.points, self.radius * 2 / np.sqrt(3), verbose=True)
+        # rips.lips_sub(subsample, self.config['lips'])
+        filt = Filtration(rips, 'min')
+        if rips.thresh > self.radius:
+            pivot = Filtration(rips, 'max', filter=lambda s: s['dist'] <= self.radius)
+        else:
+            pivot = Filtration(rips, 'max')
+        hom =  Diagram(rips, filt, pivot=pivot, verbose=True)
+        smoothing = None # lambda p: [p[0]+self.config['lips']*self.radius, p[1]-self.config['lips']*self.radius]
+        dgms = hom.get_diagram(rips, filt, pivot, smoothing)
+        barode_plt = plot_barcode(ax, dgms[1], self.cuts, self.colors, **kwargs)
+        tag = f"barcode{'-relative' if relative else ''}-lips-sub{len(subsample)}"
         if save: self.save_plot(folder, dpi, tag, sep)
         if show: plt.show()
         plt.close(fig)

@@ -48,6 +48,7 @@ class VoronoiComplex(DualComplex, EmbeddedComplex):
 
 class RipsComplex(SimplicialComplex, EmbeddedComplex):
     def __init__(self, P, thresh, dim=2, verbose=False, desc='rips'):
+        self.thresh = thresh
         EmbeddedComplex.__init__(self, P)
         for x in tqit(dio.fill_rips(P, dim, thresh), verbose, desc):
             s = stuple(x)
@@ -63,7 +64,9 @@ class RipsComplex(SimplicialComplex, EmbeddedComplex):
     def superlevels(self, sample, key='f', verbose=False):
         for s in tqit(self, verbose, 'sup'):
             s.data[key] = sample(s).min()
-    def lips(self, sample, constant):
+    def lips(self, sample, constant, invert_min=False):
+        for s in self(0):
+            s.data['max'] = s.data['min'] = sample(s[0])
         for s in self(1):
             sf = sample(s[0]) + sample(s[1])
             sd = constant * s.data['dist']
@@ -71,7 +74,7 @@ class RipsComplex(SimplicialComplex, EmbeddedComplex):
             s.data['min'] = (sf - sd) / 2
         for s in self(2):
             s.data['max'] = max(self[e].data['max'] for e in combinations(s,2))
-            s.data['min'] = min(self[e].data['min'] for e in combinations(s,2))
+            s.data['min'] = (max if invert_min else min)(self[e].data['min'] for e in combinations(s,2))
     def lips_sub(self, subsample, constant):
         for p, s in zip(self.P, self(0)):
             s.data['max'] = min(f + constant*la.norm(p - q) for q, f in zip(subsample, subsample.function))

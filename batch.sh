@@ -2,9 +2,9 @@
 
 
 NAME=${1:-'surf'}
-RES=${2:-8}
-THRESH=${3:-100}
-SUBTHRESH=${4:-300}
+RES=${2:-16}
+THRESH=${3:-200}
+SUBTHRESH=${4:-400}
 
 STEP=0
 DIR="data/${NAME}"
@@ -18,30 +18,30 @@ RUN () {
   python $1
 }
 
-RUN "parse.py $DATA --gauss --downsample $RES --save"
+# RUN "parse.py $DATA --gauss --downsample $RES --save"
+# RUN "parse.py $DATA --downsample $RES --save"
+
 RUN "surf.py $RDATA --save --contours --barcode"
+
 RUN "surf.py $RDATA --save --force --greedy --thresh $THRESH"
 RUN "surf.py $RDATA --save --force --greedy --thresh $SUBTHRESH"
 
-SAMPLE=$( echo "${SAMPLE_PATH}"*"_${THRESH}.csv" )
-SUBSAMPLE=$( echo "${SAMPLE_PATH}"*"_${SUBTHRESH}.csv" )
+SAMPLE=$( echo "${SAMPLE_PATH}"*"-${THRESH}.csv" )
+SUBSAMPLE=$( echo "${SAMPLE_PATH}"*"-${SUBTHRESH}.csv" )
 
-RUN "rips.py $SAMPLE --save --barcode"
+RUN "rips.py $SAMPLE --save --barcode --contours --rips --color"
+RUN "rips.py $SAMPLE --sub-file $SUBSAMPLE --save --barcode --contours --lips --rips --color"
 for COLOR in '' '--color'; do
   for SUB in '--cover' '--union'; do
     RUN "rips.py $SAMPLE --save --contours $SUB $COLOR"
-  done
-done
-
-# RUN "rips.py $SAMPLE --save --contours --rips --color"
-
-RUN "rips.py $SAMPLE --sub-file $SUBSAMPLE --save --contours --lips --barcode --rips --color"
-
-for COLOR in '' '--color'; do
-  for SUB in '--cover' '--union'; do
     RUN "rips.py $SAMPLE --save --contours $SUB --lips $COLOR"
   done
 done
+
+RUN "rips.py $SAMPLE --save --graph"
+RUN "rips.py $SAMPLE --save --graph --noim --barcode"
+RUN "rips.py $SAMPLE --save --lips --noim --barcode"
+
 
 # for SAMPLENAME in $SAMPLE $SUBSAMPLE; do
 #   RUN "rips.py $SAMPLENAME --save --barcode --contours --graph"
