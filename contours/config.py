@@ -3,8 +3,9 @@ import numpy as np
 from contours.style import COLOR
 
 
-LW=0.18
-SIZE=0.7
+LW=0.1
+SIZE=1
+ALPHA=0.5
 
 # TODO: make this a function
 # pass args to modify defaults
@@ -12,21 +13,21 @@ SIZE=0.7
 # [0.05, 0.2, 0.45, 0.875, 1.09, 1.31]
 
 KWARGS = {  'barcode'   : { 'lw' : 3},
-            'surf'      : { 'zorder' : 0, 'alpha' : 0.5},
-            'sample'    : { 'zorder' : 10, 'edgecolors' : 'black', 's' : SIZE, 'color' : 'black'},
-            'supsample' : { 'zorder' : 10, 'edgecolors' : 'black', 'facecolors' : 'none', 's' : SIZE, 'lw' : 0.4},
+            'surf'      : { 'zorder' : 0, 'alpha' : ALPHA},
+            'sample'    : { 'zorder' : 1, 'edgecolors' : 'black', 's' : SIZE/2, 'color' : 'black', 'visible' : False},
+            'supsample' : { 'zorder' : 10, 'edgecolors' : 'black', 'facecolors' : 'none', 's' : SIZE, 'lw' : LW},
             'subsample' : { 'zorder' : 10, 's' : SIZE*2, 'color' : 'black'},
-            'cover'     : { 'zorder' : 2, 'alpha' : 0.3, 'color' : COLOR['red']},
+            'cover'     : { 'zorder' : 2, 'alpha' : ALPHA/2, 'color' : COLOR['red']},
             'union'     : { 'zorder' : 2, 'alpha' : 1, 'color' : COLOR['red1']},
-            'rips'      : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0.6], 'lw' : LW},
-            'graph'     : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0], 'lw' : LW},
-            'min'       : { 'rips'  : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0.6], 'lw' : LW},
-                            'graph' : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0], 'lw' : LW},
-                            'cover' : { 'zorder' : 2, 'alpha' : 0.3, 'color' : COLOR['red']},
+            'rips'      : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 1, ALPHA], 'lw' : LW},
+            'graph'     : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 1, 0], 'lw' : LW},
+            'min'       : { 'rips'  : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 1, ALPHA], 'lw' : LW},
+                            'graph' : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 1, 0], 'lw' : LW},
+                            'cover' : { 'zorder' : 2, 'alpha' : ALPHA, 'color' : COLOR['red']},
                             'union' : { 'zorder' : 2, 'alpha' : 1, 'color' : COLOR['red1']}},
-            'max'       : { 'rips'  : { 'zorder' : 1, 'color' : COLOR['blue'], 'fade' : [1, 0.8, 0.6], 'lw' : LW},
-                            'graph' : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 0.8, 0], 'lw' : LW},
-                            'cover' : { 'zorder' : 2, 'alpha' : 0.3, 'color' : COLOR['blue']},
+            'max'       : { 'rips'  : { 'zorder' : 1, 'color' : COLOR['blue'], 'fade' : [1, 1, ALPHA], 'lw' : LW},
+                            'graph' : { 'zorder' : 1, 'color' : COLOR['red'], 'fade' : [1, 1, 0], 'lw' : LW},
+                            'cover' : { 'zorder' : 2, 'alpha' : ALPHA, 'color' : COLOR['blue']},
                             'union' : { 'zorder' : 2, 'alpha' : 1, 'color' : COLOR['blue1']}}}
             # 'rips'      : { 'f' : {'visible' : False, 'zorder' : 1, 'color' : COLOR['red'],
             #                         'fade' : [1, 0.8, 0.6], 'lw' : LW}},
