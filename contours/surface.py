@@ -47,6 +47,36 @@ class Surface:
         if show: plt.show()
         plt.close(fig)
         return dgms
+    def greedy_sample(self, thresh, mult=1., config=None, noise=None):
+        data = self.get_data()[self.function > self.cuts[0]]
+        points = data[greedysample(data[:,:2], thresh*mult/4)] # TODO perturb the sample
+        return SurfaceSampleData(points[:,:2], points[:,2], thresh, self, config)
+    def sample(self, thresh, sample=None, config=None):
+        fig, ax = self.init_plot()
+        surf_plt = self.plot(ax, **KWARGS['surf'])
+        data = self.get_data()[self.function > self.cuts[0]]
+        tree = KDTree(data[:,:2])
+        if sample is None:
+            points = []
+        else:
+            thresh = sample.radius if thresh is None else thresh
+            sample.plot(ax, color='black', zorder=10, s=5)
+            sample.plot_cover(ax, alpha=1, color='gray', zorder=2, radius=thresh)
+            points = sample.get_data().tolist()
+        def onclick(e):
+            p = data[tree.query(np.array([e.xdata, e.ydata]))[1]]
+            ax.add_patch(plt.Circle(p, thresh/2, color=COLOR['red1'], zorder=3, alpha=1))
+            ax.scatter(p[0], p[1], c='black', zorder=4, s=5)
+            plt.pause(0.01)
+            points.append(p)
+        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+        plt.show()
+        fig.canvas.mpl_disconnect(cid)
+        plt.close(fig)
+        if len(points):
+            points = np.vstack(sorted(points, key=lambda x: x[2]))
+            return SurfaceSampleData(points[:,:2], points[:,2], thresh, self, config)
+        return None
 
 
 class GaussianSurface(Surface):
@@ -144,35 +174,5 @@ class ScalarFieldFile(ScalarField, DataFile):
             if show: plt.pause(0.5)
             if save: self.save_plot(folder, dpi, format_float(t))
         plt.close(fig)
-    def greedy_sample(self, thresh, mult=1., config=None, noise=None):
-        data = self.get_data()[self.function > self.cuts[0]]
-        points = data[greedysample(data[:,:2], thresh*mult/4)] # TODO perturb the sample
-        return SurfaceSampleData(points[:,:2], points[:,2], thresh, self, config)
-    def sample(self, thresh, sample=None, config=None):
-        fig, ax = self.init_plot()
-        surf_plt = self.plot(ax, **KWARGS['surf'])
-        data = self.get_data()[self.function > self.cuts[0]]
-        tree = KDTree(data[:,:2])
-        if sample is None:
-            points = []
-        else:
-            thresh = sample.radius if thresh is None else thresh
-            sample.plot(ax, color='black', zorder=10, s=5)
-            sample.plot_cover(ax, alpha=1, color='gray', zorder=2, radius=thresh)
-            points = sample.get_data().tolist()
-        def onclick(e):
-            p = data[tree.query(np.array([e.xdata, e.ydata]))[1]]
-            ax.add_patch(plt.Circle(p, thresh/2, color=COLOR['red1'], zorder=3, alpha=1))
-            ax.scatter(p[0], p[1], c='black', zorder=4, s=5)
-            plt.pause(0.01)
-            points.append(p)
-        cid = fig.canvas.mpl_connect('button_press_event', onclick)
-        plt.show()
-        fig.canvas.mpl_disconnect(cid)
-        plt.close(fig)
-        if len(points):
-            points = np.vstack(sorted(points, key=lambda x: x[2]))
-            return SurfaceSampleData(points[:,:2], points[:,2], thresh, self, config)
-        return None
     def plot_barcode(self, *args, **kwargs):
         return Surface.plot_barcode(self, self.name, *args, **kwargs)

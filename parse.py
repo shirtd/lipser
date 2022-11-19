@@ -7,9 +7,12 @@ from contours.surface import USGSScalarFieldData, GaussianScalarFieldData
 from contours.config import COLOR, KWARGS, GAUSS_ARGS
 from contours.args import parser
 
+# class SurfaceParser:
+#     pass
+
 
 if __name__ == '__main__':
-    args = parser.parse_args()
+    args = parser.parse_args() # namespace=SurfaceParser)
 
     if args.gauss:
         name = 'surf'

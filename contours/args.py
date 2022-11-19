@@ -29,7 +29,7 @@ LIPS=None
 THRESH=None#PAD
 
 # PARSE
-parser = argparse.ArgumentParser(prog='parse')
+parser = argparse.ArgumentParser(prog='lipser')
 
 parser.add_argument('file', nargs='?', help='surface file')
 parser.add_argument('--gauss', action='store_true', help='generate gaussian surface')

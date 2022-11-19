@@ -22,7 +22,7 @@ class EmbeddedComplex(Complex):
         pass
 
 class DelaunayComplex(SimplicialComplex, EmbeddedComplex):
-    def __init__(self, P, verbose=False, desc='[delaunay'):
+    def __init__(self, P, verbose=False, desc='delaunay'):
         EmbeddedComplex.__init__(self, P)
         for s,f in tqit(diode.fill_alpha_shapes(P, True), verbose, desc):
             s = stuple(s)
