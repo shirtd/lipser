@@ -17,3 +17,5 @@ data/olym*
 .circles
 data/music
 !data/rainier_small/rainier_small.asc
+.data-bak
+data
